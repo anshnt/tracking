@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="A source-linked, self-hosted employee security and work visibility implementation plan for five employees.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Employee Security — Five-Person Implementation Plan</title>
+<style>
+:root{color-scheme:light;--ink:#172b36;--soft:#526873;--paper:#f5f5ef;--panel:#fff;--line:#d6dfdb;--teal:#125f54;--mint:#e7f1eb;--amber:#9a4f20;--sand:#faeee2;--nav:#102c35;--focus:#a64c12}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:28px}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}a{color:var(--teal);text-underline-offset:3px}button,input,select{font:inherit}button,a,input,select{touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--focus);outline-offset:4px}button{cursor:pointer}.top{background:var(--nav);color:#e5eeeb;padding:16px max(24px,calc((100vw - 1400px)/2));display:flex;gap:24px;justify-content:space-between;align-items:center}.brand{font-weight:650;letter-spacing:.04em;font-size:14px}.stamp{font-size:13px;color:#b8cdc9}.page{max-width:1400px;margin:auto;padding:44px 30px 72px}.eyebrow{font-size:12px;font-weight:750;text-transform:uppercase;letter-spacing:.16em;color:var(--teal)}.hero{max-width:1000px}h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(36px,5.5vw,68px);line-height:1.08;letter-spacing:-.035em;margin:16px 0 22px;max-width:900px}.intro{font-size:19px;line-height:1.6;color:var(--soft);max-width:820px}.pill-row{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}.pill{font-size:12px;letter-spacing:.03em;font-weight:650;padding:5px 11px;background:var(--mint);color:var(--teal);border-radius:30px}.pill.caution{background:var(--sand);color:var(--amber)}.actions{display:flex;gap:12px;flex-wrap:wrap;margin:26px 0 34px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 16px;border:1px solid var(--teal);border-radius:6px;background:var(--teal);color:#fff;text-decoration:none;font-size:14px;font-weight:600}.button.secondary{background:transparent;color:var(--teal)}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;border-top:1px solid var(--line);padding-top:24px;margin-bottom:40px}.summary article{padding-right:12px}.summary h2{font-size:17px;margin:8px 0}.summary p{font-size:14px;color:var(--soft);margin:0}.index-no{font-size:12px;color:var(--teal);font-weight:750;letter-spacing:.1em}.tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);margin-bottom:28px;flex-wrap:wrap}.tabs button{border:0;background:transparent;color:var(--soft);padding:12px 18px;border-bottom:3px solid transparent;font-size:15px;min-height:48px}.tabs button[aria-selected=true]{color:var(--teal);border-color:var(--teal);font-weight:700}.tab-panel[hidden]{display:none}.report-grid{display:grid;grid-template-columns:248px minmax(0,1fr);gap:40px;align-items:start}.outline{position:sticky;top:20px;max-height:calc(100vh - 40px);overflow-y:auto;padding-right:16px;font-size:13px}.outline strong{display:block;text-transform:uppercase;font-size:11px;letter-spacing:.12em;color:var(--soft);margin-bottom:12px}.outline a{display:flex;gap:11px;padding:7px 0;color:var(--soft);text-decoration:none;line-height:1.45}.outline a:hover{color:var(--teal)}.outline a span{font-variant-numeric:tabular-nums;font-size:11px;color:var(--teal);padding-top:2px}.document{min-width:0;background:var(--panel);padding:32px 36px;border:1px solid var(--line);border-radius:9px}.document h2{font-family:Georgia,serif;font-size:29px;line-height:1.25;font-weight:400;margin:46px 0 18px;padding-top:12px;border-top:1px solid var(--line);scroll-margin-top:26px}.document h2:first-of-type{margin-top:28px}.document h3{font-size:18px;margin:30px 0 12px}.document p{margin:14px 0}.document li{margin:6px 0}.document ul,.document ol{padding-left:24px}.document strong{font-weight:650}.document pre{background:#edf2f0;padding:20px;overflow-x:auto;font:13px/1.7 Consolas,monospace;border-radius:6px;white-space:pre-wrap;overflow-wrap:anywhere}.document code{font:13px/1.5 Consolas,monospace;overflow-wrap:anywhere}.document :not(pre)>code{background:#edf2f0;padding:2px 4px;border-radius:3px}.table-wrap{overflow-x:auto;margin:20px 0}table{border-collapse:collapse;width:100%;font-size:13px;line-height:1.6}th{text-align:left;background:#edf2f0;font-weight:700}td,th{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}td{min-width:110px}td:first-child{font-weight:550}th:first-child,td:first-child{padding-left:12px}tr:last-child td{border-bottom:0}.explorer-heading{font-family:Georgia,serif;font-size:33px;font-weight:400;margin:0 0 10px}.muted{color:var(--soft)}.explainer{max-width:800px;margin:0 0 26px}.controls{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:28px 0}.field{display:flex;flex-direction:column;gap:7px}.field label{font-size:13px;font-weight:650}.field input,.field select{width:100%;background:#fff;color:var(--ink);border:1px solid #aabcb5;border-radius:5px;padding:10px 12px;min-height:46px}.decision{background:var(--mint);padding:24px 28px;border-left:4px solid var(--teal);margin-bottom:28px}.decision h3{margin:0 0 8px;font-size:22px;font-weight:650}.decision p{margin:7px 0}.decision .limit{font-size:14px;color:var(--soft)}.architecture{display:grid;grid-template-columns:1fr 24px 1fr 24px 1fr;align-items:stretch;gap:10px;margin:30px 0}.node{background:#fff;border:1px solid var(--line);border-radius:7px;padding:22px 20px}.node small{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--teal)}.node h3{font-size:18px;line-height:1.4;margin:9px 0}.node p{font-size:14px;color:var(--soft);margin:0}.arrow{align-self:center;font-size:24px;color:var(--teal)}.boundary{font-size:14px;border-top:1px solid var(--line);padding-top:18px;color:var(--soft)}.capability-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:30px 0}.capability-grid h3{font-size:16px;margin:0 0 10px}.capability-grid p{font-size:14px;color:var(--soft);margin:0}.caption{font-size:13px;color:var(--soft)}.budget-layout{display:grid;grid-template-columns:1.25fr 1fr;gap:40px}.budget-fields{display:grid;grid-template-columns:1fr 1fr;gap:18px}.estimate{align-self:start;background:var(--nav);color:#fff;padding:32px;border-radius:8px}.estimate .big{font-size:48px;font-weight:450;letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin:10px 0}.estimate .minor{font-size:14px;color:#bfd0cc}.estimate hr{border:0;border-top:1px solid #4c656b;margin:24px 0}.estimate p{margin:8px 0}.budget-note{margin-top:24px;font-size:14px;color:var(--soft)}.notice{background:var(--sand);padding:17px 20px;color:#713a18;font-size:14px;margin:25px 0}.footer{margin-top:32px;padding-top:22px;border-top:1px solid var(--line);font-size:13px;color:var(--soft);display:flex;gap:20px;justify-content:space-between}.noscript{padding:16px;background:var(--sand)}
+@media(max-width:1000px){.report-grid{grid-template-columns:190px minmax(0,1fr);gap:24px}.document{padding:24px}.budget-layout{gap:24px}.architecture{grid-template-columns:1fr;gap:12px}.arrow{transform:rotate(90deg);justify-self:center}}
+@media(max-width:720px){.page{padding:28px 18px 44px}.top{padding:14px 18px;flex-wrap:wrap;gap:5px}.summary{grid-template-columns:1fr;gap:20px}.report-grid{grid-template-columns:1fr}.outline{position:static;max-height:210px;border-bottom:1px solid var(--line);padding-bottom:15px;display:grid;grid-template-columns:1fr 1fr;gap:0 16px}.outline strong{grid-column:1/-1}.document{padding:20px 16px}.document h2{font-size:25px}.intro{font-size:17px}.controls,.budget-layout,.capability-grid{grid-template-columns:1fr}.budget-fields{gap:14px}.tabs button{padding:10px 11px;font-size:14px}.footer{flex-direction:column;gap:6px}.decision{padding:20px}.table-wrap{max-width:100%}.table-wrap td{min-width:145px}}
+@media(max-width:380px){.budget-fields,.outline{grid-template-columns:1fr}}
+@media print{body{background:white;font-size:10pt}.page{padding:0;max-width:none}.top,.actions,.tabs,.outline,.footer,.controls{display:none!important}.tab-panel[hidden]{display:block}.report-grid{display:block}.document{padding:0;border:0}.hero h1{font-size:34pt}.summary{gap:15px}.document h2{break-after:avoid;font-size:20pt}.document h3{break-after:avoid}.document pre{font-size:8pt}.table-wrap{overflow:visible}td,th{font-size:8pt;min-width:0!important;padding:6px}.tab-panel{break-before:page}.architecture{grid-template-columns:1fr 24px 1fr 24px 1fr}.decision,.node,.estimate{break-inside:avoid}.estimate{background:#eee;color:#172b36}.estimate .minor{color:#526873}.notice{background:#eee;color:#172b36}.budget-fields{display:none}}
+</style>
+</head>
+<body>
+<div class="top"><span class="brand">WORK / SECURITY</span><span class="stamp">Research and implementation brief · 12 November 2026</span></div>
+<main class="page">
+<header class="hero">
+<div class="eyebrow">Five employees · Company-controlled infrastructure</div>
+<h1>Keep company data close.<br>Make work progress visible.</h1>
+<p class="intro">A practical plan for your own servers: isolated workspaces, supported laptop controls, and one internal portal built around maintained open-source tools.</p>
+<div class="pill-row"><span class="pill">Self-hosted by design</span><span class="pill">Company laptops + BYOD</span><span class="pill">Source-linked research</span><span class="pill caution">Plan — no software deployed</span></div>
+<div class="actions"><a class="button" href="employee-security-implementation-plan.md" download>Download agent handoff · MD</a><button class="button secondary" type="button" id="print-report">Print / save PDF</button></div>
+</header>
+<section class="summary" aria-label="Recommended approach">
+<article><span class="index-no">01 / DATA</span><h2>Sensitive work stays on servers</h2><p>Use separate remote desktops and restrict transfer channels. Keep local work for roles that need it.</p></article>
+<article><span class="index-no">02 / VISIBILITY</span><h2>Track deliverables and blockers</h2><p>Combine task evidence, employee updates, and security status without pretending activity equals output.</p></article>
+<article><span class="index-no">03 / BUILD</span><h2>Integrate a small proven stack</h2><p>Start with Keycloak, Guacamole, Wazuh, backups, and a thin custom portal. Add tools only when needed.</p></article>
+</section>
+<div class="tabs" role="tablist" aria-label="Report views">
+<button type="button" role="tab" id="tab-plan" aria-controls="panel-plan" aria-selected="true" tabindex="0">Implementation plan</button>
+<button type="button" role="tab" id="tab-modes" aria-controls="panel-modes" aria-selected="false" tabindex="-1">Compare working modes</button>
+<button type="button" role="tab" id="tab-budget" aria-controls="panel-budget" aria-selected="false" tabindex="-1">Budget model</button>
+</div>
+<section class="tab-panel" role="tabpanel" id="panel-plan" aria-labelledby="tab-plan">
+<div class="report-grid"><nav class="outline" aria-label="Plan sections"><strong>Implementation handoff</strong><a href="#section-1"><span>01</span>Recommended decision</a><a href="#section-2"><span>02</span>Assumptions and unresolved decisions</a><a href="#section-3"><span>03</span>Company laptops and personal laptops</a><a href="#section-4"><span>04</span>Researched tools and reuse decisions</a><a href="#section-5"><span>05</span>Threat model and data boundaries</a><a href="#section-6"><span>06</span>Proposed server architecture</a><a href="#section-7"><span>07</span>Own-server operation and external dependencies</a><a href="#section-8"><span>08</span>Portal product specification</a><a href="#section-9"><span>09</span>Work tracking and collection policy</a><a href="#section-10"><span>10</span>Technical specification for the custom code</a><a href="#section-11"><span>11</span>Access and tamper resistance</a><a href="#section-12"><span>12</span>Export and offboarding workflows</a><a href="#section-13"><span>13</span>Deployment and operations</a><a href="#section-14"><span>14</span>Delivery phases and effort</a><a href="#section-15"><span>15</span>Agent backlog with dependencies and acceptance</a><a href="#section-16"><span>16</span>Required validation scenarios</a><a href="#section-17"><span>17</span>Costs and build versus buy</a><a href="#section-18"><span>18</span>Governance and employee notice</a><a href="#section-19"><span>19</span>Copy and give this instruction to the implementation agent</a><a href="#section-20"><span>20</span>Definition of done</a></nav><article class="document">
+<p><strong>Prepared:</strong> 12 November 2026<br />
+<strong>Confirmed scope:</strong> approximately five employees; services and business data hosted on your own servers.<br />
+<strong>Deliverable:</strong> researched architecture, implementation backlog, acceptance criteria, and instructions for an implementation agent. This is a plan, not deployed or tested security software.</p>
+<h2 id="section-1">1. Recommended decision</h2>
+<p>Build a small internal <strong>Work and Security Portal</strong> around existing self-hosted components. Keep sensitive work inside individually assigned server workspaces. Offer company laptops for roles that need local applications or offline work. Give BYOD users browser access to their server workspace without installing a surveillance agent on their personal computer.</p>
+<p>The strongest practical starting point for five people is:</p>
+<ol>
+<li><strong>Keycloak</strong> for internal identity and MFA.</li>
+<li><strong>Apache Guacamole</strong> for browser access to five separate Linux virtual desktops, using <strong>xrdp</strong> inside each VM.</li>
+<li><strong>Wazuh</strong> for security telemetry from servers, virtual desktops, and company laptops.</li>
+<li><strong>Your portal</strong> for onboarding, work summaries, policy status, export requests, and incident workflows.</li>
+<li><strong>Gitea</strong>, if you need internal code hosting and task tracking; otherwise connect an existing internal tracker.</li>
+<li><strong>Encrypted backups</strong> to separate company-controlled storage, using a tool such as restic.</li>
+</ol>
+<p>Add Fleet when company laptops need inventory and policy querying. Add Kimai only if formal timesheets, project budgets, or billing justify another application. Add a self-hosted NetBird deployment if you lack a suitable remote-access network. These are staged additions, not a requirement to operate every tool on day one.</p>
+<p>This architecture is an engineering recommendation based on the sources below, not a vendor guarantee. No monitoring system can guarantee zero leakage once someone can see information. Cameras, transcription, a compromised personal computer, and privileged administrators remain material risks.</p>
+<h3>What this achieves</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Goal</th>
+<th>Primary control</th>
+<th>Result to expect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keep working files on company servers</td>
+<td>Remote desktops, internal repositories, internal storage</td>
+<td>Reduces local file copies; screen pixels still reach the employee</td>
+</tr>
+<tr>
+<td>Limit ordinary copying out</td>
+<td>Disable remote clipboard export, drive redirection, printing, SFTP, and direct alternate access</td>
+<td>Blocks tested transfer paths through the configured gateway</td>
+</tr>
+<tr>
+<td>Limit uploads to personal services</td>
+<td>Server-side network isolation; only approved internal destinations for sensitive work</td>
+<td>Stronger than merely logging browser activity</td>
+</tr>
+<tr>
+<td>Know what work is progressing</td>
+<td>Tasks, deliverable links, review status, employee updates, optional timesheets</td>
+<td>Shows outcomes and blockers with context</td>
+</tr>
+<tr>
+<td>Detect security problems</td>
+<td>Wazuh, gateway logs, application audit events, health checks</td>
+<td>Alerts require a human owner and tuning</td>
+</tr>
+<tr>
+<td>Reduce employee tampering</td>
+<td>Standard user accounts, separate admin plane, supported service permissions</td>
+<td>Resists ordinary-user interference; not unstoppable against root or physical control</td>
+</tr>
+<tr>
+<td>Present one product</td>
+<td>Portal plus authenticated links and narrow integrations</td>
+<td>One workflow with separately maintained upstream tools</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="section-2">2. Assumptions and unresolved decisions</h2>
+<p>Only headcount and self-hosting are confirmed. Do not infer employee jurisdiction from the chat timezone. The agent can develop with synthetic data while these decisions are collected.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Working assumption</th>
+<th>Changes the design when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Work type</td>
+<td>Browser, documents, ordinary development</td>
+<td>CAD, video, GPU, hardware access, or Windows-only applications are needed</td>
+</tr>
+<tr>
+<td>Endpoint OS</td>
+<td>Windows first for company laptops; browser BYOD can be Windows/macOS/Linux</td>
+<td>macOS management or Linux local workflows are selected</td>
+</tr>
+<tr>
+<td>Server ownership</td>
+<td>Existing or purchased company-controlled physical servers</td>
+<td>Rented dedicated infrastructure is also acceptable</td>
+</tr>
+<tr>
+<td>External dependencies</td>
+<td>No external storage or telemetry for employee/business content; approved updates may use the internet</td>
+<td>You require completely disconnected operation</td>
+</tr>
+<tr>
+<td>Internet availability</td>
+<td>Employees can reach the office server reliably</td>
+<td>Offline work or poor connectivity is essential</td>
+</tr>
+<tr>
+<td>Jurisdiction and employee notice</td>
+<td>Must be settled before employee monitoring begins</td>
+<td>Local requirements determine notice, consultation, basis, retention, and access rights</td>
+</tr>
+<tr>
+<td>Budget</td>
+<td>Unspecified; use resource formulas rather than pretend vendor quotes</td>
+<td>Hardware inventory and labor rates are known</td>
+</tr>
+<tr>
+<td>Administration</td>
+<td>One named technical owner and one recovery approver</td>
+<td>No one can maintain the services or respond to alerts</td>
+</tr>
+</tbody>
+</table></div>
+<p>First collect: employee countries, application list, sensitive data types, existing hardware specifications, bandwidth/latency, backup location, availability target, administrator availability, and maximum spend. A deployment that needs Windows VMs must resolve Windows virtualization and remote-access licensing before production; Linux is the default compatibility trial, not an assumption that every business application works on it.</p>
+<h2 id="section-3">3. Company laptops and personal laptops</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>How it runs</th>
+<th>Visibility</th>
+<th>Protection limits</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Company laptop with local work</td>
+<td>Supported Windows service, macOS launch daemon/MDM, or Linux systemd service; disclosed to employees</td>
+<td>Device health, approved security events, work-app integrations</td>
+<td>Data exists locally; local administrators and offline copies complicate control</td>
+<td>Use when local applications or offline work are necessary</td>
+</tr>
+<tr>
+<td>Company laptop as a thin client</td>
+<td>Managed laptop opens the internal remote desktop</td>
+<td>Device health plus server session/work events</td>
+<td>Screens remain observable; office outage stops work</td>
+<td>Best combination when budget allows</td>
+</tr>
+<tr>
+<td>BYOD browser workspace</td>
+<td>Personal browser opens Guacamole; execution and files stay in a server VM</td>
+<td>Remote session metadata, internal application actions, work outcomes</td>
+<td>Cannot inspect or trust the personal host; host malware can capture screens/input</td>
+<td>Default BYOD route for sensitive work</td>
+</tr>
+<tr>
+<td>BYOD locally installed application</td>
+<td>Voluntary, explicitly scoped business software</td>
+<td>App-specific business actions only</td>
+<td>Personal owner can stop/uninstall it; no reliable whole-device boundary</td>
+<td>Limit to low-sensitivity workflows</td>
+</tr>
+<tr>
+<td>Browser extension or scheduled task</td>
+<td>Optional managed-browser feature or periodic maintenance</td>
+<td>Narrow browser/app signals</td>
+<td>Not a complete DLP boundary; scheduled jobs are not continuous protection</td>
+<td>Supplement only</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Do not implement hidden processes, rootkits, process disguise, covert persistence, permission bypasses, keylogging, password collection, webcam/microphone monitoring, or uninstall evasion.</strong> For company equipment, use supported administrator controls and disclose installed services. If an agent stops reporting, mark its state unknown and restrict future sensitive access through a server-controlled gate. Do not secretly reinstall it on a personal computer.</p>
+<p>On Windows, enforce standard-user work accounts, encryption, updates, firewall policy, and approved application configuration with supported OS management. On Linux use equivalent privilege separation and configuration management. On macOS, robust enrollment controls may involve Automated Device Enrollment; that is an Apple-supported management model rather than an invisible background process. Apple MDM uses APNs, so a self-hosted MDM server still has an Apple service dependency. See <a target="_blank" rel="noopener noreferrer" href="https://support.apple.com/guide/deployment/automated-device-enrollment-management-dep73069dd57/web">Apple enrollment guidance</a> and <a target="_blank" rel="noopener noreferrer" href="https://github.com/fleetdm/fleet/blob/main/articles/apple-mdm-setup.md">Fleet APNs setup</a>.</p>
+<h2 id="section-4">4. Researched tools and reuse decisions</h2>
+<p>License descriptions below are an initial screening. Before adoption, pin an exact release, inspect its complete license and bundled dependencies, review security advisories and supported upgrade paths, and record the result. Repository main branches can differ from stable releases. Keeping services separate simplifies maintenance; it does not automatically remove license obligations.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Useful capability</th>
+<th>Self-hosting and license observations</th>
+<th>Decision for five employees</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://guacamole.apache.org/">Apache Guacamole</a> / <a target="_blank" rel="noopener noreferrer" href="https://github.com/apache/guacamole-client">source</a></td>
+<td>Browser remote desktop gateway</td>
+<td>Apache-2.0; remote hosts and their OS licenses are separate</td>
+<td>Core gateway; configure all transfer paths explicitly</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/neutrinolabs/xrdp">xrdp</a></td>
+<td>RDP access to Linux desktops</td>
+<td>Apache-2.0; runs inside your Linux VMs</td>
+<td>Core for Linux workspace trial; restrict inbound access to guacd</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/keycloak/keycloak">Keycloak</a></td>
+<td>Internal identity and SSO</td>
+<td>Apache-2.0</td>
+<td>Core identity; MFA, recovery, and separate admin accounts</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://documentation.wazuh.com/current/getting-started/components/wazuh-agent.html">Wazuh</a> / <a target="_blank" rel="noopener noreferrer" href="https://github.com/wazuh/wazuh">source</a></td>
+<td>Security logs, configuration assessment, file integrity, response</td>
+<td>Self-hostable; current source has GPLv2, AGPLv3 engine, and dual-licensed shared components</td>
+<td>Core security, not a content-aware endpoint DLP substitute</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/fleetdm/fleet">Fleet</a></td>
+<td>Inventory, osquery queries, device policy workflows</td>
+<td>Free code MIT; premium code separately licensed</td>
+<td>Add for company laptops after feature validation; avoid duplicating every Wazuh collector</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/netbirdio/netbird">NetBird</a></td>
+<td>Identity-controlled private networking</td>
+<td>BSD-3-Clause except management/signal/relay directories under AGPLv3</td>
+<td>Optional; self-host management, relay, and identity; restrict BYOD routes</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/go-gitea/gitea">Gitea</a></td>
+<td>Internal Git, code review, issues, projects, CI</td>
+<td>MIT</td>
+<td>Use for engineering work evidence if you need internal hosting; isolate CI runners</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/kimai/kimai">Kimai</a></td>
+<td>Timers, timesheets, project budgets, reports, JSON API</td>
+<td>AGPL-3.0; plugins may have their own terms; needs MySQL/MariaDB</td>
+<td>Optional timesheet system; do not add just to collect more data</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/ActivityWatch/activitywatch">ActivityWatch</a></td>
+<td>Local application/window/browser activity and AFK signals</td>
+<td>MPL-2.0; local, user-controlled tracking design</td>
+<td>Optional employee self-insight only; not the authoritative work or security record</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/gitleaks/gitleaks">Gitleaks</a></td>
+<td>Secret scanning for Git/files</td>
+<td>MIT CLI; separately review any hosted action/wrapper</td>
+<td>Run internally in CI and enforce server-side checks; local hooks alone are bypassable</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/ansible/ansible">Ansible</a></td>
+<td>Repeatable server and endpoint configuration</td>
+<td>GPLv3-or-later for ansible-core; collections have separate terms</td>
+<td>Use from a restricted admin runner; no employee-accessible credentials</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/restic/restic">restic</a></td>
+<td>Encrypted backups</td>
+<td>BSD-2-Clause</td>
+<td>Use with application-consistent database dumps and separate backup credentials</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/grokability/snipe-it">Snipe-IT</a></td>
+<td>Asset assignment and equipment records</td>
+<td>AGPL-3.0</td>
+<td>Defer; five asset records in the portal are sufficient initially</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://docs.kasm.com/docs/reference/license">Kasm Workspaces</a></td>
+<td>Remote workspaces and transfer restrictions</td>
+<td>Community Edition permits evaluation and eligible non-commercial use, up to five concurrent sessions; commercial production needs suitable licensing</td>
+<td>Paid alternative to compare, not a free commercial baseline</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://github.com/cloudsecuritylabs/openDLP/blob/main/README.md">OpenDLP mirror</a></td>
+<td>Historical sensitive-data discovery</td>
+<td>README identifies version 0.5.1 from 2012</td>
+<td>Do not base new endpoint enforcement on this; maintenance and compatibility are not established</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://learn.microsoft.com/en-us/purview/endpoint-dlp-learn-about">Microsoft Purview Endpoint DLP</a></td>
+<td>Content-aware endpoint activity controls</td>
+<td>Commercial Microsoft service with documented OS/browser coverage and onboarding requirements</td>
+<td>Capability benchmark; excluded from the strict own-server baseline</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Important edition traps</h3>
+<p>Fleet's current public matrix puts several functions, including conditional access, encryption enforcement, lock/wipe, RBAC, and audit logging, in Premium. Do not attribute them to the free edition. Free inventory and API access can still be useful; keep any free-edition admin interface isolated and do not give managers direct access. Pricing and entitlement must be reconfirmed for five hosts. <a target="_blank" rel="noopener noreferrer" href="https://fleetdm.com/pricing">Fleet feature matrix</a>.</p>
+<p>Guacamole documents clipboard controls and separate RDP printing, drive, and SFTP settings. Disabling one path does not disable all paths. It is a gateway, not a virtual machine orchestrator or full DLP product. <a target="_blank" rel="noopener noreferrer" href="https://guacamole.apache.org/doc/gug/configuring-guacamole.html">Guacamole configuration</a>.</p>
+<h3>Commercial inspiration without copying a surveillance product</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Published capability to study</th>
+<th>Proposed interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://hubstaff.com/features">Hubstaff</a></td>
+<td>Project time, app/URL activity, optional screenshots</td>
+<td>Adopt project-linked timesheets and employee visibility; leave screenshots out of the MVP</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://support.activtrak.com/hc/en-us/articles/360053092432-How-ActivTrak-Respects-Employee-Privacy">ActivTrak</a></td>
+<td>Workforce analytics and privacy controls</td>
+<td>Adopt team-level context and employee access to their own records</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://www.teramind.co/features/">Teramind</a></td>
+<td>Monitoring and DLP feature categories</td>
+<td>Adopt explicit security-rule workflows and incident review, not a broad content-recording system</td>
+</tr>
+<tr>
+<td><a target="_blank" rel="noopener noreferrer" href="https://docs.kasm.com/docs/develop/how-to/security/data-loss-prevention">Kasm DLP controls</a></td>
+<td>Clipboard, downloads, printing, and other session channels</td>
+<td>Use as a checklist when testing remote-workspace boundaries</td>
+</tr>
+</tbody>
+</table></div>
+<p>These are feature references, not independent performance evaluations or recommendations to buy them. Do not copy proprietary source, UI assets, wording, or undocumented integrations.</p>
+<h2 id="section-5">5. Threat model and data boundaries</h2>
+<p>Classify information before writing rules:</p>
+<ul>
+<li><strong>Public:</strong> approved for external sharing.</li>
+<li><strong>Internal:</strong> routine business information; only authenticated employees.</li>
+<li><strong>Confidential:</strong> customer records, contracts, private source, financial details; default server workspace access.</li>
+<li><strong>Restricted:</strong> production secrets, bulk customer exports, sensitive regulated information; role-limited server environment, explicit release approval, minimal standing access.</li>
+</ul>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Leakage path</th>
+<th>Prevent or reduce</th>
+<th>Detect</th>
+<th>Remaining gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Remote clipboard/file download</td>
+<td>Gateway controls plus remote OS restrictions</td>
+<td>Gateway configuration drift and export audit</td>
+<td>Alternative apps or direct protocol paths if left open</td>
+</tr>
+<tr>
+<td>Personal email, AI sites, cloud drives, paste sites</td>
+<td>Sensitive VMs have internal-only egress; explicit approved release workflow</td>
+<td>Approved proxy and application security events</td>
+<td>An allowlisted multi-tenant service can still carry data to a personal tenant</td>
+</tr>
+<tr>
+<td>USB or printing on a company laptop</td>
+<td>Supported OS device/print policies; avoid local restricted files</td>
+<td>OS events where configured and supported</td>
+<td>Not equivalent to content-aware blocking across all applications</td>
+</tr>
+<tr>
+<td>Git push to personal repository</td>
+<td>Internal-only repository route for sensitive VMs; narrow repo permissions and credentials</td>
+<td>Internal push/review audit; secret scan</td>
+<td>Arbitrary internet egress permits alternative exfiltration channels</td>
+</tr>
+<tr>
+<td>Bulk internal download/export</td>
+<td>Application authorization, scoped queries, export quotas, approval</td>
+<td>Export volumes, destination, actor, classification</td>
+<td>Thresholds create false positives; small leaks can evade volume detection</td>
+</tr>
+<tr>
+<td>Stolen password</td>
+<td>MFA, short-lived sessions, revocation</td>
+<td>Authentication anomalies and recovery events</td>
+<td>Compromised active session or personal host</td>
+</tr>
+<tr>
+<td>Agent removal</td>
+<td>Standard-user restrictions; supported service permissions</td>
+<td>Independent last-seen checks and collector health</td>
+<td>Root/admin can compromise endpoint claims</td>
+</tr>
+<tr>
+<td>Administrator misuse</td>
+<td>Separate admin identities, independent audit copy, second review for sensitive exports</td>
+<td>Privileged-action logs</td>
+<td>A single person controlling every system remains powerful</td>
+</tr>
+<tr>
+<td>Photo, local screenshot, manual transcription</td>
+<td>Reduce visible information and standing access</td>
+<td>Limited reliable detection</td>
+<td>Cannot reliably prevent these on BYOD; cameras also affect company laptops</td>
+</tr>
+</tbody>
+</table></div>
+<p>Do not describe VPN connectivity, file integrity monitoring, or application focus time as proof that data cannot leave. Do not equate time at keyboard with completed work. A file-change alert is not evidence that an external copy was blocked.</p>
+<h2 id="section-6">6. Proposed server architecture</h2>
+<p>Start with one virtualization host and separate VMs/security zones; keep backups on a second company-controlled device or server. This is a single-production-host design with an acknowledged outage risk. A spare recovery host or second production host is a later reliability purchase, not implied high availability.</p>
+<pre><code class="language-text">Employee laptop, company or BYOD
+  -&gt; office LAN or approved private access network
+  -&gt; HTTPS reverse proxy
+       -&gt; Keycloak identity + MFA
+       -&gt; Work and Security Portal
+       -&gt; Guacamole gateway -&gt; isolated guacd -&gt; employee-specific VM
+
+Employee VM -&gt; authorized internal Git / files / applications only
+Employee VM -&gt; no arbitrary internet, LAN discovery, or admin-network access
+
+Servers / company laptops -&gt; Wazuh security plane
+Applications / gateway -&gt; narrow portal adapters -&gt; portal PostgreSQL
+Admin workstation -&gt; separate management network -&gt; approved administration
+Production -&gt; encrypted, application-consistent backups -&gt; separate storage
+</code></pre>
+<h3>Network policy</h3>
+<ul>
+<li>Default deny between employee VMs. Permit only necessary internal application flows.</li>
+<li>BYOD access can reach the identity service, portal, and gateway, not internal file shares, SSH, RDP, database ports, or hypervisor management.</li>
+<li>Only guacd can reach workstation RDP ports. Pin and verify remote-host TLS trust; never use certificate-ignore settings as a production shortcut.</li>
+<li>guacd accepts connections only from the Guacamole application. An attacker-controlled gateway is a privileged route into desktops; isolate and patch it accordingly.</li>
+<li>Databases and tool APIs are internal. Admin dashboards are available only from the management network.</li>
+<li>Sensitive workspaces are internal-only. When research or dependency retrieval is needed, use a separate non-sensitive browsing VM and an approved import workflow or internal package mirror.</li>
+<li>General web allowlists are weaker than internal-only access. DNS, redirects, arbitrary URL paths, personal accounts on business domains, SSH, and developer tools must be included in testing.</li>
+<li>Never expose a container runtime socket, hypervisor API, production secrets, or privileged CI runner to an employee VM.</li>
+</ul>
+<h3>Initial sizing, to benchmark</h3>
+<p>These are engineering starting allocations for light workloads, not measured requirements for your applications.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Workload</th>
+<th>Initial allocation</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Five Linux desktops</td>
+<td>2–4 vCPU, 4–8 GiB RAM, 40–80 GB each</td>
+<td>Heavy builds, CAD, or video can require much more</td>
+</tr>
+<tr>
+<td>Identity, gateway, portal, reverse proxy, portal DB</td>
+<td>4–6 vCPU, 8–12 GiB RAM combined</td>
+<td>Separate VMs/containers and per-service credentials; not one shared admin container</td>
+</tr>
+<tr>
+<td>Wazuh all-in-one</td>
+<td>4 vCPU, 8 GiB RAM, at least 50 GB</td>
+<td>Official quickstart's 1–25 agent reference; reserve extra for indexing and retention</td>
+</tr>
+<tr>
+<td>Optional Git, time tracking, inventory</td>
+<td>2–4 vCPU, 4–8 GiB RAM initially</td>
+<td>Add only selected components; Kimai/Fleet may introduce MySQL/MariaDB</td>
+</tr>
+<tr>
+<td>Production host</td>
+<td>Approximately 12–16 modern physical CPU cores, 64 GiB RAM, 1–2 TB usable SSD to trial</td>
+<td>vCPU overcommit is workload-dependent; storage includes OS, growth, snapshots, and logs</td>
+</tr>
+<tr>
+<td>Backup target</td>
+<td>Separate device; capacity based on real changed data and retention</td>
+<td>RAID and local snapshots are not an independent backup</td>
+</tr>
+</tbody>
+</table></div>
+<p>The Wazuh allocation is sourced from its <a target="_blank" rel="noopener noreferrer" href="https://documentation.wazuh.com/current/quickstart.html">quickstart requirements</a>. All other allocations require a five-user concurrency trial. Allocate closer to 128 GiB or a separate workspace host if measurements justify it. Measure browser rendering, build time, disk I/O, memory pressure, and gateway CPU at realistic latency before buying more hardware.</p>
+<h2 id="section-7">7. Own-server operation and external dependencies</h2>
+<p>The baseline must keep source code, documents, employee events, logs, databases, authentication data, and backups on company-controlled infrastructure. No SaaS analytics, crash reporting, external LLM processing, remote fonts, hosted dashboards, or third-party screenshot stores in the portal.</p>
+<p>Self-hosting does not imply air-gapping. Define and document outbound access explicitly:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Dependency</th>
+<th>Default handling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Application database, logs, file storage</td>
+<td>Internal services only</td>
+</tr>
+<tr>
+<td>Identity and MFA</td>
+<td>Internal Keycloak; local TOTP or suitable hardware authenticators; offline recovery records</td>
+</tr>
+<tr>
+<td>DNS, time, certificates</td>
+<td>Prefer internal services for private access; public DNS/ACME, if chosen, expose associated metadata and need an exception</td>
+</tr>
+<tr>
+<td>Packages, signatures, vulnerability feeds</td>
+<td>Approved download route or internal mirror; track source, verification, and refresh schedule</td>
+</tr>
+<tr>
+<td>NetBird</td>
+<td>If selected, self-host its control components and relay/STUN dependencies; no default hosted identity or relay shortcut</td>
+</tr>
+<tr>
+<td>Apple management</td>
+<td>APNs and Apple enrollment dependencies require an explicit exception; use another platform if zero external control-plane services is mandatory</td>
+</tr>
+<tr>
+<td>Windows management and activation</td>
+<td>Validate the exact edition, activation model, update route, licensing, and management dependencies; do not promise Intune/Autopilot as an on-premises-only system</td>
+</tr>
+<tr>
+<td>Notifications</td>
+<td>Portal inbox plus existing internal email; no new Slack/email content export unless explicitly chosen</td>
+</tr>
+<tr>
+<td>Backups</td>
+<td>Separate company-controlled storage; consider an encrypted offline/offsite company-held copy for site-loss protection</td>
+</tr>
+</tbody>
+</table></div>
+<p>Verification: observe outbound network traffic through a controlled firewall during installation, normal use, updates, and failures. Inventory each destination, purpose, data category, and approved owner. Disable optional telemetry using documented settings. For an air-gapped variant, use offline packages, internal certificate/time services, and a signed update import process, and test operation without internet access.</p>
+<h2 id="section-8">8. Portal product specification</h2>
+<p>The custom product coordinates operations; upstream tools remain separate services. Use SSO links first and add narrow read integrations before privileged actions. Do not fork all upstream code into one repository.</p>
+<h3>Employee experience</h3>
+<ol>
+<li>Sign in with MFA and see the applicable monitoring notice, policy version, and contact person.</li>
+<li>Open the assigned workspace and approved internal applications.</li>
+<li>View assigned tasks, linked deliverables, blockers, and expected review dates.</li>
+<li>Submit a short daily update or a project timesheet where required.</li>
+<li>Request an export by selecting the file/reference, recipient, purpose, and classification.</li>
+<li>See the personal work records collected, corrections, export status, and access restrictions affecting them.</li>
+</ol>
+<h3>Owner and manager experience</h3>
+<ul>
+<li>Five-person overview: active assignments, deliverables awaiting review, blockers, overdue work, and missing employee updates.</li>
+<li>Device/workspace state: compliant, noncompliant, unknown, or not applicable, with observation time and exact failing check.</li>
+<li>Security cases: severity, source, evidence metadata, owner, status, and action history.</li>
+<li>Export queue: approved destination, business justification, release expiry, reviewer, and download receipt.</li>
+<li>Onboarding/offboarding checklist with per-system completion status and failed steps.</li>
+<li>No employee ranking, universal productivity percentage, or automatic performance decision from activity signals.</li>
+</ul>
+<h3>Reuse boundaries</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>System of record</th>
+<th>Portal integration</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identity and access groups</td>
+<td>Keycloak</td>
+<td>OIDC for portal; controlled provisioning adapter later</td>
+</tr>
+<tr>
+<td>Remote connection definitions</td>
+<td>Guacamole database/auth extensions</td>
+<td>Authenticated launch link first; documented extension or operator workflow for lifecycle</td>
+</tr>
+<tr>
+<td>Security evidence</td>
+<td>Wazuh</td>
+<td>Restricted API read; retain IDs and summaries, not duplicate all raw logs</td>
+</tr>
+<tr>
+<td>Tasks and reviews</td>
+<td>Internal tracker/Gitea</td>
+<td>Read API or signed webhooks; deep links</td>
+</tr>
+<tr>
+<td>Timesheets</td>
+<td>Kimai if enabled</td>
+<td>JSON API adapter; keep timesheet accounting in one place</td>
+</tr>
+<tr>
+<td>Laptop inventory</td>
+<td>Fleet if enabled</td>
+<td>Read-only inventory adapter with capability/edition discovery</td>
+</tr>
+<tr>
+<td>Export approvals, notices, case workflow</td>
+<td>Custom portal</td>
+<td>Own PostgreSQL schema and authorization</td>
+</tr>
+</tbody>
+</table></div>
+<p>Use Guacamole's supported SAML authentication extension with Keycloak plus a database extension for connection authorization; test group mapping for the pinned versions. Authentication alone does not grant a safe connection policy. The documented OIDC extension has flow-specific constraints, so do not assume it is interchangeable with the portal's authorization-code/PKCE implementation. <a target="_blank" rel="noopener noreferrer" href="https://guacamole.apache.org/doc/gug/saml-auth.html">Guacamole SAML documentation</a>, <a target="_blank" rel="noopener noreferrer" href="https://guacamole.apache.org/doc/gug/openid-auth.html">OIDC documentation</a>.</p>
+<p>Gateway SSO and remote operating-system login are separate boundaries. Create a unique, unprivileged OS account for each employee; decide explicitly how credentials are provisioned, reset, and revoked. For the initial lab, prompting for that employee's remote OS credentials is preferable to embedding shared administrator passwords. If a supported secret-provider integration is adopted later, restrict retrieval to the assigned connection and test revocation. Do not assume Keycloak automatically creates Linux or Windows accounts or that closing the browser logs out the remote desktop.</p>
+<h2 id="section-9">9. Work tracking and collection policy</h2>
+<p>Collect signals that answer a business question. Continuous security monitoring on company systems and in server workspaces is separate from scheduled employee work-activity collection.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Signal</th>
+<th>MVP default</th>
+<th>Access and interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tasks, review state, blockers, deliverable links</td>
+<td>On</td>
+<td>Employee and authorized manager; primary progress evidence</td>
+</tr>
+<tr>
+<td>Daily employee update</td>
+<td>On</td>
+<td>Short narrative; can describe meetings, research, and offline work</td>
+</tr>
+<tr>
+<td>Project time</td>
+<td>Optional</td>
+<td>Employee-entered or knowingly started timer; editing history preserved</td>
+</tr>
+<tr>
+<td>Workspace start/end and authentication</td>
+<td>On</td>
+<td>Security and operations; not proof of continuous effort</td>
+</tr>
+<tr>
+<td>Device patch/encryption/agent health</td>
+<td>Company devices/server VMs only</td>
+<td>IT/security; report unknown when stale</td>
+</tr>
+<tr>
+<td>Export and privileged actions</td>
+<td>On</td>
+<td>Restricted security/approval roles</td>
+</tr>
+<tr>
+<td>Application categories and idle periods</td>
+<td>Off initially</td>
+<td>Optional later, during disclosed work sessions; coarse categories only, never a performance score</td>
+</tr>
+<tr>
+<td>Window titles, full URLs, clipboard text</td>
+<td>Off</td>
+<td>Titles/URLs can contain customer data, secrets, and personal information</td>
+</tr>
+<tr>
+<td>Screenshots and full session recordings</td>
+<td>Off</td>
+<td>Separate exceptional use case, notice, access, and retention decision required</td>
+</tr>
+<tr>
+<td>Keystrokes, passwords, personal browsing, camera/audio</td>
+<td>Excluded</td>
+<td>Do not implement</td>
+</tr>
+</tbody>
+</table></div>
+<p>If ActivityWatch is trialed, retain its local, user-controlled purpose. Any central export would be new integration work requiring a separate scope and privacy decision; do not relabel it enterprise DLP. Its README describes local storage and activity watchers. <a target="_blank" rel="noopener noreferrer" href="https://github.com/ActivityWatch/activitywatch">ActivityWatch source</a>.</p>
+<p>Proposed retention defaults, subject to jurisdiction and actual business purpose: 30 days for optional raw work-activity events, 90 days for security/session metadata, 180 days for approval and privileged-action records, and 12 months for work summaries if justified. Formal payroll, financial, legal-hold, or contract records need their own schedule. Delete expired records and derived copies; encrypted backups expire on a documented rotation, and restore jobs must reapply deletion tombstones and current legal holds.</p>
+<h2 id="section-10">10. Technical specification for the custom code</h2>
+<p>Use the team's existing supported stack if available. Otherwise, a practical proposal is React/TypeScript for the UI, FastAPI/Python for an API and background worker, and PostgreSQL for portal data. Use a PostgreSQL-backed jobs/outbox table initially. Five employees do not justify Kafka, Kubernetes, a data lake, or an additional analytics database.</p>
+<h3>Repository structure</h3>
+<pre><code class="language-text">apps/web/                     Employee and administrator UI
+apps/api/                     Authorization, workflow, versioned API
+apps/worker/                  Idempotent polling, approvals, retention
+packages/contracts/           API schemas and event definitions
+connectors/                   Keycloak, Wazuh, tracker, optional Fleet/Kimai
+infra/compose/                Local app development and lab services
+infra/ansible/                Server roles, network rules, VM configuration
+policies/                     Versioned templates and collection allowlists
+tests/                        Contract, authorization, integration, end-to-end
+docs/                         Threat model, runbooks, evidence, decisions
+</code></pre>
+<p>Keep upstream services' databases and schemas separate. One PostgreSQL instance may host separate databases/roles for supported components at this scale, but never shared superuser credentials. Do not force MySQL-dependent tools into PostgreSQL.</p>
+<h3>Core records</h3>
+<ul>
+<li><code>employees</code>: internal UUID, immutable identity subject, manager, status; avoid email as the sole identity key.</li>
+<li><code>assets</code>: asset UUID, ownership, assigned employee, OS, upstream IDs; restricted fields for company equipment only.</li>
+<li><code>workspaces</code>: UUID, owner, role profile, classification ceiling, connection reference, lifecycle state.</li>
+<li><code>policy_versions</code> and <code>policy_assignments</code>: immutable version/hash, scope, activation time, exceptions, reviewer.</li>
+<li><code>posture_observations</code>: source, observed/received time, checks, expiry; observations are evidence, not trusted commands.</li>
+<li><code>work_updates</code>: date, task references, deliverables, blocker, employee correction history.</li>
+<li><code>security_events</code>: source ID, source version, type, severity, actor/resource, event time, redacted metadata.</li>
+<li><code>cases</code>: owner, reason, evidence references, status, actions, closure rationale.</li>
+<li><code>export_requests</code>: object/version reference, classification, recipient, purpose, status, reviewer, expiry, release checksum/receipt.</li>
+<li><code>audit_events</code>: actor, action, target, reason, before/after metadata hashes, request ID, time; append-only for application roles.</li>
+<li><code>jobs</code> and <code>connector_checkpoints</code>: idempotency keys, next run, attempts, cursor, last successful sync.</li>
+<li><code>retention_rules</code>, <code>legal_holds</code>, and <code>deletion_tombstones</code>: enforce lifecycle across production and restore.</li>
+</ul>
+<h3>Proposed API surface</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Purpose and authorization</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /v1/me</code> and <code>/v1/me/collection-policy</code></td>
+<td>Employee profile, collected categories, notice/version</td>
+</tr>
+<tr>
+<td><code>GET /v1/workspaces</code></td>
+<td>Authorized workspace references only</td>
+</tr>
+<tr>
+<td><code>GET /v1/devices/{id}/posture</code></td>
+<td>Employee own device or scoped IT role</td>
+</tr>
+<tr>
+<td><code>POST /v1/work-updates</code></td>
+<td>Employee writes own update; manager cannot silently rewrite it</td>
+</tr>
+<tr>
+<td><code>POST /v1/export-requests</code></td>
+<td>Create a request, not release a file</td>
+</tr>
+<tr>
+<td><code>POST /v1/export-requests/{id}/decisions</code></td>
+<td>Designated reviewer; forbid self-approval</td>
+</tr>
+<tr>
+<td><code>POST /v1/export-requests/{id}/release</code></td>
+<td>Separate capability, revalidation, short expiry, audited receipt</td>
+</tr>
+<tr>
+<td><code>GET /v1/cases</code> and <code>POST /v1/cases/{id}/actions</code></td>
+<td>Security scope; limited action catalogue</td>
+</tr>
+<tr>
+<td><code>POST /v1/offboarding-jobs</code></td>
+<td>Privileged role, reason, idempotency key, explicit target review</td>
+</tr>
+<tr>
+<td><code>GET /v1/operations/connectors</code></td>
+<td>IT-only health, cursor age, edition/capability state</td>
+</tr>
+</tbody>
+</table></div>
+<p>Every list/detail/action must enforce object-level authorization. Use secure HTTP-only session cookies, CSRF protection where applicable, strict origin checks, request limits, parameterized queries, secret redaction, and OIDC token issuer/audience/nonce validation. Do not put service tokens in browser storage or expose vendor credentials to the front end.</p>
+<h3>Event contract and correctness</h3>
+<p>Each normalized event includes <code>schema_version</code>, <code>event_id</code>, <code>source</code>, <code>source_event_id</code>, <code>employee_id</code> if resolved, <code>asset_id</code> if resolved, <code>event_type</code>, <code>occurred_at</code>, <code>received_at</code>, <code>classification</code>, <code>retention_policy</code>, and allowlisted metadata. Use UTC in storage and the employee's chosen timezone in displays.</p>
+<p>Deduplicate on source plus source event ID. Handle pagination, replay, reordered events, clock skew, rate limits, schema changes, and identity reassignment. Preserve an unresolved identity rather than guessing. Cursor advancement and event persistence must be atomic. Use bounded exponential retry and an operator-visible failed-job queue. Display stale/unknown data with timestamps; a successful API call is not proof that collection is complete.</p>
+<h2 id="section-11">11. Access and tamper resistance</h2>
+<p>For a company-owned laptop, the acceptable goal is: <strong>ordinary employees cannot disable required controls using their work account; IT can service them; loss of telemetry is visible.</strong> No promise of undetectability or absolute inability to stop software is credible against the owner of a personal laptop or an administrator controlling the OS.</p>
+<p>Use native service managers with supported startup/restart settings and service permissions, standard-user employee accounts, managed configuration, authenticated updates, and centrally observed heartbeats. Prefer upstream endpoint agents over a new privileged cross-platform agent. A separate employee-facing page explains what is installed and why.</p>
+<p>For new sensitive local-device access, proposed policy: posture observation no older than 15 minutes; required collector heartbeat no older than 5 minutes; failure causes unknown/noncompliant state. These are proposed thresholds to tune in a pilot, not built-in guarantees of any shortlisted tool. A posture-aware gateway must enforce this on every protected route; Fleet or a VPN being present does not implement it automatically. BYOD remote-only access uses an explicitly different policy and does not pretend the personal device has passed local posture checks.</p>
+<p>If device health becomes unknown during an active sensitive session, alert immediately and require the chosen enforcement adapter to terminate or restrict that session within the tested target window. Do not assume IdP disablement, a VPN rule change, or a short token lifetime terminates an already-open connection.</p>
+<p>Provide audited, expiring IT maintenance exceptions and a documented break-glass recovery procedure. Do not self-modify, hide services, disable security products, or bypass OS permission prompts. Full-device wipe is excluded from the MVP and must never be available for personal laptops.</p>
+<h2 id="section-12">12. Export and offboarding workflows</h2>
+<h3>Approved export</h3>
+<p><code>requested -&gt; reviewed -&gt; approved/rejected -&gt; staged -&gt; released -&gt; expired</code></p>
+<p>Approval alone is not a transfer mechanism. A restricted release worker stages only the approved object/version into a release area. Validate authorization, classification, destination, expiry, and current employment status again at release time. For the MVP, an administrator can manually deliver the file through an already approved business channel and attach a receipt; do not imply a complete secure external delivery service exists. The release worker must not fetch arbitrary user-supplied URLs or filesystem paths. One-time portal downloads can be added later with short-lived grants and audit, understanding that an authorized recipient can copy the released file.</p>
+<h3>Offboarding</h3>
+<p><code>requested -&gt; access revoked -&gt; active sessions terminated -&gt; credentials rotated -&gt; assets reviewed -&gt; verified complete</code></p>
+<p>Disable identity and new logins; terminate gateway sessions and underlying OS sessions, background tasks, and any independent SSH/RDP connections; revoke repository tokens, VPN peers, application passwords, and export grants; transfer business ownership; preserve only authorized records; recover company equipment. Rotate shared credentials that the employee knew. Do not erase personal equipment.</p>
+<p>Maintain separate statuses for each subsystem and retry safely. Target new-login denial and active-session termination within five minutes of an offboarding action under normal connectivity, verified end-to-end. Keycloak logout alone is insufficient. If automated session termination is not supported by a stable interface in the pinned gateway version, implement an approved extension or use a tested operator procedure and show offboarding as incomplete until verified.</p>
+<h2 id="section-13">13. Deployment and operations</h2>
+<p>Use Docker Compose for application development and suitable low-complexity service deployment inside separated VMs. Run the remote desktops as separate VMs, not privileged containers sharing an employee-accessible host. Use Ansible for repeatable host configuration and an existing supported hypervisor; choosing the hypervisor is an environment decision, not a reason to invent one.</p>
+<p>Production controls:</p>
+<ul>
+<li>Pin supported releases and container digests; record an SBOM, licenses, upstream advisories, and the tested configuration. No floating <code>latest</code> tags in production.</li>
+<li>Use a restricted internal secret store or protected service credential files initially; no credentials in source, example configs, logs, browser bundles, or backup manifests.</li>
+<li>Mirror artifacts where required. Verify signatures/checksums from trustworthy release metadata and update in a lab before production.</li>
+<li>Separate identity, gateway, security, and management permissions. Application roles must not have unrestricted access to hypervisor or endpoint commands.</li>
+<li>Use separate backup credentials, encrypted database dumps, and restore rehearsals. A snapshot without database consistency is not a recovery plan.</li>
+<li>Maintain an independent audit copy on company-controlled storage with retention protections. Hash chaining adds tamper evidence but cannot make a log immutable against an administrator who controls both data and keys.</li>
+<li>Alert through an internal channel for identity outage, gateway errors, collector gaps, disk pressure, failed backups, certificate expiry, connector failures, and excessive failed logins.</li>
+<li>Assign one human owner for patching, triage, employee support, and restore drills. A dashboard without an operator does not protect data.</li>
+</ul>
+<p>Proposed recovery targets: RPO 24 hours and RTO one business day for the first pilot. Restore Keycloak, gateway connection data, portal DB, internal repositories, workspace data, and configuration into a clean environment. If a one-day interruption is unacceptable, fund a spare host and improve backup frequency before production.</p>
+<h2 id="section-14">14. Delivery phases and effort</h2>
+<p>These are rough planning estimates for one experienced full-stack/infrastructure engineer with part-time IT/security review, existing server access, and compatible applications. Agent assistance does not replace real-device testing, license review, or an operational owner. Some work overlaps; do not add the ranges mechanically as a fixed delivery promise.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Approximate effort</th>
+<th>Exit condition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0. Discovery and decisions</td>
+<td>1–2 engineer days</td>
+<td>Applications, data classes, countries, hardware, owners, and dependency policy documented</td>
+</tr>
+<tr>
+<td>1. One-user infrastructure lab</td>
+<td>3–5 days</td>
+<td>MFA, isolated VM, gateway controls, security events, and backup/restore demonstrated</td>
+</tr>
+<tr>
+<td>2. Five-user security pilot</td>
+<td>3–5 days</td>
+<td>Concurrent work, blocked transfer tests, onboarding/offboarding, and outage behavior accepted</td>
+</tr>
+<tr>
+<td>3. Portal MVP</td>
+<td>8–12 days</td>
+<td>Employee view, work summary, read integrations, export queue, audit, RBAC, retention</td>
+</tr>
+<tr>
+<td>4. Integration and hardening</td>
+<td>5–8 days</td>
+<td>Adversarial paths, dependency audit, authorization review, restore, runbooks, and rollback validated</td>
+</tr>
+<tr>
+<td>5. Optional local-laptop management</td>
+<td>5–10 additional days</td>
+<td>Each supported OS and edition proven on physical company devices</td>
+</tr>
+</tbody>
+</table></div>
+<p>Expect approximately 4–7 calendar weeks for the core with timely decisions and review. Exclude kernel DLP development, universal app/browser interception, custom remote desktop protocols, GPU workstation engineering, payroll automation, and continuous screen recording. A usable one-user workspace can precede the portal.</p>
+<h2 id="section-15">15. Agent backlog with dependencies and acceptance</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Priority / depends on</th>
+<th>Work</th>
+<th>Acceptance evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D01</td>
+<td>P0</td>
+<td>Record applications, ownership, jurisdictions, data classes, server inventory</td>
+<td>Decision log distinguishes confirmed inputs from assumptions</td>
+</tr>
+<tr>
+<td>D02</td>
+<td>P0 / D01</td>
+<td>Threat model and privacy/collection policy</td>
+<td>Named owners approve categories and access before employee collection</td>
+</tr>
+<tr>
+<td>D03</td>
+<td>P0 / D01</td>
+<td>License, edition, external-dependency and release audit</td>
+<td>Exact version manifest; no unexplained hosted dependency</td>
+</tr>
+<tr>
+<td>I01</td>
+<td>P0 / D01</td>
+<td>Network zones and deny-by-default firewall rules</td>
+<td>BYOD and employee VM cannot reach admin/database/peer VM networks</td>
+</tr>
+<tr>
+<td>I02</td>
+<td>P0 / I01</td>
+<td>Keycloak MFA and recovery setup</td>
+<td>Employee/admin separation; login/recovery/logout tests</td>
+</tr>
+<tr>
+<td>I03</td>
+<td>P0 / I01–I02</td>
+<td>Guacamole, guacd, one Linux/xrdp VM</td>
+<td>Assigned user connects; another employee cannot; TLS verified</td>
+</tr>
+<tr>
+<td>I04</td>
+<td>P0 / I03</td>
+<td>Transfer and egress restrictions</td>
+<td>Clipboard, print, drive, SFTP, internet upload, alternate protocol tests</td>
+</tr>
+<tr>
+<td>I05</td>
+<td>P0 / I01</td>
+<td>Wazuh and scoped telemetry</td>
+<td>Synthetic change/login events arrive; collector outage is visible</td>
+</tr>
+<tr>
+<td>I06</td>
+<td>P0 / I01–I05</td>
+<td>Encrypted independent backup and recovery</td>
+<td>Restore to clean VM with sampled checksums and measured time</td>
+</tr>
+<tr>
+<td>I07</td>
+<td>P0 / I03–I06</td>
+<td>Five-user concurrency and compatibility trial</td>
+<td>Real application workload works; measured latency and resource report</td>
+</tr>
+<tr>
+<td>P01</td>
+<td>P1 / I02</td>
+<td>API/UI scaffold, migrations, portal authentication</td>
+<td>Repeatable local setup; no default production secrets</td>
+</tr>
+<tr>
+<td>P02</td>
+<td>P0 / P01</td>
+<td>Object-level authorization and audit</td>
+<td>Cross-user ID substitution denied; privileged actions recorded</td>
+</tr>
+<tr>
+<td>P03</td>
+<td>P1 / P02</td>
+<td>Employee policy and personal-record views</td>
+<td>Own data only; collection version and correction history visible</td>
+</tr>
+<tr>
+<td>P04</td>
+<td>P1 / P02</td>
+<td>Work summary and internal tracker adapter</td>
+<td>Deliverables and blockers shown; no keyboard-derived productivity score</td>
+</tr>
+<tr>
+<td>P05</td>
+<td>P1 / I05,P02</td>
+<td>Wazuh read adapter and connector health</td>
+<td>Deduplication, pagination, stale-state, and outage recovery demonstrated</td>
+</tr>
+<tr>
+<td>P06</td>
+<td>P1 / P02</td>
+<td>Device/workspace inventory and posture model</td>
+<td>Unknown distinct from compliant; ownership constraints enforced</td>
+</tr>
+<tr>
+<td>P07</td>
+<td>P0 / P02</td>
+<td>Export request, review, and staged release workflow</td>
+<td>No self-approval; exact object/recipient/expiry bound; receipt auditable</td>
+</tr>
+<tr>
+<td>P08</td>
+<td>P0 / I02–I04,P02</td>
+<td>Offboarding workflow and runbook</td>
+<td>Active sessions and independent credentials revoked; partial failure surfaced</td>
+</tr>
+<tr>
+<td>P09</td>
+<td>P1 / P02–P08</td>
+<td>Retention, holds, deletion and restore handling</td>
+<td>Expiry deletes expected data; holds and restored tombstones verified</td>
+</tr>
+<tr>
+<td>Q01</td>
+<td>P0 / all core tasks</td>
+<td>Security review and outbound-traffic verification</td>
+<td>No unauthorized routes, SaaS telemetry, content logs, or exposed secrets</td>
+</tr>
+<tr>
+<td>Q02</td>
+<td>P0 / Q01</td>
+<td>Pilot rollout and rollback rehearsal</td>
+<td>One user first; then five; successful restore and owner handover</td>
+</tr>
+<tr>
+<td>L01</td>
+<td>P2 / pilot</td>
+<td>Fleet evaluation on company laptop</td>
+<td>Edition-aware checklist, physical-device policy and tamper tests</td>
+</tr>
+<tr>
+<td>L02</td>
+<td>P2 / L01</td>
+<td>Posture-aware local access gate</td>
+<td>Every local sensitive route covered; stale data cannot silently permit access</td>
+</tr>
+<tr>
+<td>L03</td>
+<td>P2 / pilot</td>
+<td>Kimai or optional work-session metrics</td>
+<td>Adopt only for demonstrated business need; collection policy updated</td>
+</tr>
+</tbody>
+</table></div>
+<p>P0 means a release prerequisite, not necessarily the first task chronologically. P1 is core product work. P2 is optional after the five-person pilot.</p>
+<h2 id="section-16">16. Required validation scenarios</h2>
+<p>Use synthetic canary documents and test credentials; never real customer secrets for trial exfiltration. Store test steps, exact versions, configurations, timestamps, observed results, and evidence references internally. Label each control as planned, configured, tested, or failed.</p>
+<ol>
+<li><strong>Identity:</strong> MFA is required; disabled employees cannot start a new session; shared accounts are absent.</li>
+<li><strong>Isolation:</strong> employee A cannot access employee B's VM, task records, export objects, or security cases by changing an ID.</li>
+<li><strong>Clipboard:</strong> copy text, images, and files from remote to local through every enabled client/protocol; expected blocked paths are actually blocked.</li>
+<li><strong>Transfer channels:</strong> printing/PDF, RDP drives, SFTP, gateway upload/download, session sharing, and direct SSH/RDP cannot bypass policy.</li>
+<li><strong>Egress:</strong> personal cloud upload, webmail, external Git, alternate DNS, redirects, arbitrary outbound sockets, and personal accounts on allowed domains are denied in the sensitive VM.</li>
+<li><strong>Developer privileges:</strong> employee code cannot access container sockets, host files, CI secrets, hypervisor management, or another workspace's credentials.</li>
+<li><strong>Export:</strong> self-approval, changed object version, expired approval, recipient substitution, path traversal, arbitrary URL fetching, and double release are rejected.</li>
+<li><strong>Offboarding:</strong> keep a session and long-running job open, then offboard; verify gateway, OS, application tokens, VPN, and pending releases independently.</li>
+<li><strong>Collector failure:</strong> stop an authorized lab collector or cut its network route; the portal becomes unknown/stale and does not report compliant.</li>
+<li><strong>Tamper controls:</strong> a standard company-laptop user cannot stop/uninstall required services through supported ordinary-user actions; IT can maintain them through an audited workflow.</li>
+<li><strong>Offline behavior:</strong> new restricted local access fails closed when posture is stale; existing access follows the tested termination rule. BYOD uses remote-only policy.</li>
+<li><strong>Replay and ingestion:</strong> duplicate/reordered events do not duplicate cases; revoked connector credentials and pagination failures produce visible errors.</li>
+<li><strong>Privacy:</strong> URL query strings, window titles, clipboard bodies, passwords, and screenshot content are absent from standard telemetry and logs.</li>
+<li><strong>Manager scope:</strong> managers see authorized work summaries, not broad security evidence or other teams' records; employee data exports are access controlled.</li>
+<li><strong>Recovery:</strong> restore onto clean infrastructure, rotate compromised secrets, reapply deletions/holds, and meet agreed recovery targets.</li>
+<li><strong>Dependencies:</strong> observe traffic with the internet disconnected or restricted; identify every external dependency; no silent fallback to hosted relays or analytics.</li>
+<li><strong>Concurrency:</strong> five people perform actual work simultaneously; document median/p95 login and interaction latency, CPU, memory, disk, and application results.</li>
+<li><strong>Negative evidence:</strong> demonstrate that a phone camera or compromised BYOD host remains outside prevention claims; describe this honestly in the owner handover.</li>
+</ol>
+<p>No release on happy-path UI screenshots alone. Tests must exercise the real enforcement points and supported endpoint OS builds. This planning package does not claim any of these runtime tests have passed.</p>
+<h2 id="section-17">17. Costs and build versus buy</h2>
+<p>For five employees, operational effort will often matter more than per-seat subscription arithmetic. Start with the remote workspace controls and proven workflows; build custom workflow code after the lab works. Do not spend months writing a DLP agent to avoid a modest license fee.</p>
+<p>Use this cost model, filling in actual quotes:</p>
+<pre><code class="language-text">Monthly equivalent = hardware purchase / useful-life months
+                   + electricity + backup storage + connectivity increment
+                   + licensed features + OS/application licenses
+                   + maintenance hours * actual hourly cost
+
+Initial implementation = engineer days * actual day rate
+                       + hardware/setup purchases + independent review
+
+Optional laptop purchase = company laptop count * delivered unit cost
+</code></pre>
+<p>Illustration only, in your chosen currency: server/backup hardware 2,000; useful life 36 months; power/backup/connectivity 50/month; maintenance 4 hours at 30/hour; optional licenses 0. Monthly equivalent is approximately 226 before laptops, taxes, OS/app licenses, engineering implementation, or downtime costs. These are arbitrary budget inputs, not market prices. Replace them with your actual existing-server costs and quotations.</p>
+<p>Choose a paid, self-hosted endpoint DLP product only if there is a demonstrated requirement for local content-aware controls that the remote-workspace design cannot meet. Require a supported on-premises architecture, no unapproved telemetry, an OS/browser/channel matrix, trial evidence, and five-seat commercial terms. Reusing open-source components is not evidence that a custom bundle will outperform maintained commercial DLP.</p>
+<h2 id="section-18">18. Governance and employee notice</h2>
+<p>Before collecting employee work-activity data, identify the relevant countries and have the employer's appropriate adviser review purpose, lawful basis, proportionality, consultation obligations, employee access/correction, retention, and any cross-border flows. An employee acknowledgement is not automatically a valid lawful basis for every kind of monitoring. The UK ICO's worker-monitoring guidance is a useful example of necessity, transparency, and impact assessment; it is UK-specific and currently marked under review, not a substitute for applicable local advice. <a target="_blank" rel="noopener noreferrer" href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/employment/monitoring-workers/data-protection-and-monitoring-workers/">ICO worker monitoring guidance</a>.</p>
+<p>The notice should explain: why collection happens, ownership-specific scope, exact categories, collection times, who can access data, retention, security escalation, employee review/correction, personal-device limits, and the contact person. Keep security evidence separate from work-performance assessment. Do not automate discipline or employment decisions from activity signals.</p>
+<h2 id="section-19">19. Copy and give this instruction to the implementation agent</h2>
+<pre><code class="language-text">Implement the Employee Security and Work Visibility plan for approximately five
+employees. All business data, employee telemetry, identity services, logs, and
+backups must remain on company-controlled servers.
+
+Read this entire plan, then start with D01-D03 and an isolated synthetic-data lab.
+Preserve confirmed constraints. Ask for missing application/OS/country/hardware
+information while completing independent local development. Document assumptions.
+
+Use Keycloak, Apache Guacamole, separate employee VMs with xrdp when Linux is
+compatible, Wazuh, and encrypted independent backups. Add Gitea, Fleet, Kimai,
+or self-hosted NetBird only when the stated need exists. Inspect exact stable
+release licenses, dependencies, security advisories, and edition limitations.
+Never assume paid capabilities are free or that a GitHub main branch is stable.
+
+Build a small portal, not a new endpoint surveillance platform. Use the existing
+supported stack, or React/TypeScript + FastAPI/Python + PostgreSQL. Keep vendor
+services and schemas separate. Add SSO links and read-only adapters first.
+Implement scoped authorization, work summaries, collection transparency,
+connector health, export approvals, offboarding, audit, and retention.
+
+Do not implement stealth, undetectability, keylogging, password capture, camera/
+microphone surveillance, rootkits, permission bypass, uninstall evasion, or any
+personal-device wipe. Use supported service permissions on company devices and
+server-side restrictions. Treat stale endpoint state as unknown. Do not claim
+total prevention of screen capture, photos, transcription, or admin tampering.
+
+Do not treat authentication as complete session revocation. Prove gateway and
+underlying OS session termination, credential revocation, and pending-export
+revocation end-to-end. Do not use undocumented vendor APIs as stable contracts
+without a pinned-version adapter and compatibility tests. Do not write directly
+to vendor databases for routine lifecycle integration.
+
+Deliver a runnable lab deployment, reproducible configuration, version/license
+manifest, threat model, automated meaningful tests, real-boundary test evidence,
+backup/restore instructions, employee notice draft, operating runbooks, rollback,
+and a release report marking each control planned/configured/tested/failed.
+
+Work through the backlog in dependency order. Do not introduce Kubernetes,
+Kafka, custom kernel drivers, or always-on screen recording. Do not connect real
+employees or production data until the deployment owner has accepted the
+collection policy, jurisdiction review, dependency exceptions, and pilot results.
+</code></pre>
+<h2 id="section-20">20. Definition of done</h2>
+<p>The implementation is complete when all five employees can perform their actual assigned work; sensitive files stay in company-controlled workspaces except approved releases; tested transfer and egress paths enforce the chosen policy; managers can review deliverables and blockers; employees can inspect their own collection scope and records; access revocation covers active sessions and credentials; collector gaps are visible; a clean restore succeeds; and an identified owner can operate, update, and recover the system.</p>
+<p>Every residual risk, unsupported OS/application/channel, manual step, paid feature, and external dependency must be explicit. The finished system should be described in terms of controls actually tested, never as invisible, unstoppable, or leak-proof.</p>
+</article></div>
+</section>
+<section class="tab-panel" role="tabpanel" id="panel-modes" aria-labelledby="tab-modes" hidden>
+<h2 class="explorer-heading">Choose the work boundary</h2>
+<p class="explainer muted">Compare where software runs, what you can enforce, and what remains exposed. These recommendations are proposed architecture, not tested controls.</p>
+<div class="controls">
+<div class="field"><label for="ownership">Laptop ownership</label><select id="ownership"><option value="byod">Employee personal laptop</option><option value="company">Company-issued laptop</option></select></div>
+<div class="field"><label for="workload">Application requirement</label><select id="workload"><option value="remote">Browser / Linux-compatible remote work</option><option value="windows">Windows-only remote applications</option><option value="local">Local hardware access / offline work</option></select></div>
+</div>
+<div class="decision" aria-live="polite"><h3 id="mode-title"></h3><p id="mode-description"></p><p class="limit" id="mode-limit"></p></div>
+<div class="architecture" aria-label="Access architecture">
+<div class="node"><small>Employee side</small><h3 id="node-client">Personal browser</h3><p id="client-detail">No whole-device monitoring agent.</p></div><div class="arrow" aria-hidden="true">→</div>
+<div class="node"><small>Access boundary</small><h3 id="node-gate">MFA + Guacamole</h3><p id="gate-detail">Only the gateway is reachable. No direct RDP, SSH, or file shares.</p></div><div class="arrow" aria-hidden="true">→</div>
+<div class="node"><small>Company servers</small><h3 id="node-work">Assigned Linux VM</h3><p id="work-detail">Internal apps and files. Restricted egress and transfer paths.</p></div>
+</div>
+<p class="boundary" id="boundary-text">Trust boundary: the personal laptop remains outside company administration. A phone camera, local screenshots, and host malware remain possible.</p>
+<div class="capability-grid">
+<article><h3>Prevent tested transfers</h3><p>Control clipboard export, drives, printing, SFTP, alternate access, and server egress at their actual enforcement points.</p></article>
+<article><h3>Detect security events</h3><p>Collect scoped security metadata and collector health. A file-change event does not prove that a copy was blocked.</p></article>
+<article><h3>Review work with context</h3><p>Use deliverables, review state, blockers, and employee updates. Keep security cases separate from performance assessment.</p></article>
+</div>
+<p class="caption">Details and citations: plan sections 3–7 and 11–12. Remote access reduces file transfer exposure; it cannot make visible information impossible to copy.</p>
+</section>
+<section class="tab-panel" role="tabpanel" id="panel-budget" aria-labelledby="tab-budget" hidden>
+<h2 class="explorer-heading">Estimate your actual operating cost</h2>
+<p class="explainer muted">All inputs are illustrative, in one currency of your choice. Replace them with your own quotations and labor costs. The headcount is fixed at five.</p>
+<div class="budget-layout">
+<div>
+<div class="budget-fields">
+<div class="field"><label for="hardware">Server + backup hardware cost</label><input id="hardware" type="number" min="0" step="100" value="2000"></div>
+<div class="field"><label for="life">Useful life, months</label><input id="life" type="number" min="1" step="1" value="36"></div>
+<div class="field"><label for="running">Power, backup, network / month</label><input id="running" type="number" min="0" step="10" value="50"></div>
+<div class="field"><label for="licenses">All licenses / month</label><input id="licenses" type="number" min="0" step="10" value="0"></div>
+<div class="field"><label for="hours">Maintenance hours / month</label><input id="hours" type="number" min="0" step="1" value="4"></div>
+<div class="field"><label for="rate">Maintenance cost / hour</label><input id="rate" type="number" min="0" step="5" value="30"></div>
+<div class="field"><label for="days">Implementation engineer days</label><input id="days" type="number" min="0" step="1" value="25"></div>
+<div class="field"><label for="dayrate">Implementation day rate</label><input id="dayrate" type="number" min="0" step="10" value="240"></div>
+</div>
+<p class="budget-note">Monthly equivalent = hardware ÷ useful life + recurring operating costs + licenses + maintenance hours × hourly cost. Implementation labor is shown separately. Taxes, laptops, application/OS licenses not entered above, independent review, and downtime are excluded.</p>
+</div>
+<div class="estimate" aria-live="polite" aria-atomic="true"><div>Monthly equivalent</div><div class="big" id="monthly">226</div><div class="minor" id="per-person">45 per employee / month</div><hr><p id="cash">170 recurring cash / month, excluding hardware</p><p id="initial">6,000 implementation labor</p><p id="first-year">10,040 first-year cash including hardware and implementation</p><p class="minor">Illustrative units, not a vendor quote. Maintenance cost may be internal labor rather than a cash payment.</p></div>
+</div>
+<div class="notice">Open-source software still needs patching, backup checks, incident triage, and employee support. For five people, keep administration simple before adding more trackers.</div>
+</section>
+<noscript><p class="noscript">The full implementation plan is available above without JavaScript. The working-mode comparison and calculator require JavaScript.</p></noscript>
+<footer class="footer"><span>Prepared for approximately five employees · 12 November 2026</span><span>Transparent controls. Explicit limits. Verifiable evidence.</span></footer>
+</main>
+<script>
+(() => {
+ 'use strict';
+ const get = id => document.getElementById(id);
+ const tabs = [...document.querySelectorAll('[role="tab"]')];
+ function activate(tab, focus=false) {
+  tabs.forEach(t => {
+   const active = t === tab;
+   t.setAttribute('aria-selected', String(active)); t.tabIndex = active ? 0 : -1;
+   get(t.getAttribute('aria-controls')).hidden = !active;
+  });
+  if(focus) tab.focus();
+ }
+ tabs.forEach((tab,i) => {
+  tab.addEventListener('click', () => activate(tab));
+  tab.addEventListener('keydown', event => {
+   let next;
+   if(event.key === 'ArrowRight') next = (i+1)%tabs.length;
+   if(event.key === 'ArrowLeft') next = (i+tabs.length-1)%tabs.length;
+   if(event.key === 'Home') next=0;
+   if(event.key === 'End') next=tabs.length-1;
+   if(next !== undefined){event.preventDefault();activate(tabs[next],true);}
+  });
+ });
+ get('print-report').addEventListener('click', () => window.print());
+ const set = (id,text) => {get(id).textContent=text;};
+ function updateMode(){
+  const byod=get('ownership').value === 'byod';
+  const kind=get('workload').value;
+  if(kind==='local'){
+   set('mode-title',byod?'Issue a company laptop for sensitive local work':'Use supported company-laptop controls');
+   set('mode-description',byod?'A personal laptop cannot provide the same enforceable boundary for offline files. Keep sensitive work remote, or provide company equipment for the local requirement.':'Run disclosed, supported security services with standard-user employee accounts, encryption, updates, approved software, and server-observed health.');
+   set('mode-limit','Local files create residual copy risk. Content-aware endpoint DLP is a separate requirement; inventory and file-integrity alerts do not replace it.');
+   set('node-client','Company-managed device');set('client-detail','Standard work account; supported OS controls.');
+   set('node-gate','Verified access policy');set('gate-detail','Test every protected route; stale health is unknown, not compliant.');
+   set('node-work','Internal services + logs');set('work-detail','Scoped business access and central security evidence; local files remain on the laptop.');
+   set('boundary-text','Trust boundary: company controls the OS, but local administrator privileges, physical access, offline copies, and photos remain risks. BYOD local work is limited to low-sensitivity use cases.');
+  } else {
+   const windows=kind==='windows';
+   set('mode-title',windows?'Trial licensed Windows workspaces':'Use an assigned server workspace');
+   set('mode-description',windows?'Keep the application and its working files on a separate server VM. Validate application compatibility, Windows virtualization rights, remote-access licensing, and five-user performance before committing.':'Use Keycloak MFA and Guacamole to reach a separate Linux/xrdp VM for each employee. Keep confidential files, internal Git, and approved applications on your servers.');
+   set('mode-limit','Disable and test every transfer path. Restrict sensitive VM egress to internal destinations. Displayed information can still be photographed or captured by the client device.');
+   set('node-client',byod?'Personal browser':'Managed thin client');
+   set('client-detail',byod?'No whole-device monitoring agent.':'Company-laptop health controls plus remote work.');
+   set('node-gate','MFA + Guacamole');set('gate-detail','Only the gateway is reachable. No direct RDP, SSH, or file shares.');
+   set('node-work',windows?'Assigned Windows VM':'Assigned Linux VM');set('work-detail','Internal apps and files. Restricted egress and transfer paths.');
+   set('boundary-text',byod?'Trust boundary: the personal laptop remains outside company administration. A phone camera, local screenshots, and host malware remain possible.':'Trust boundary: managed client plus isolated server workspace reduces local file exposure. Screen capture, photographs, and privileged administrators remain possible.');
+  }
+ }
+ get('ownership').addEventListener('change',updateMode);get('workload').addEventListener('change',updateMode);updateMode();
+ const fields=['hardware','life','running','licenses','hours','rate','days','dayrate'];
+ const fmt = x => new Intl.NumberFormat('en-US',{maximumFractionDigits:0}).format(x);
+ function updateBudget(){
+  const invalid=fields.some(id => get(id).value.trim()==='' || !get(id).checkValidity());
+  if(invalid){set('monthly','Check inputs');set('per-person','Use nonnegative amounts and at least one useful-life month.');['cash','initial','first-year'].forEach(id=>set(id,''));return;}
+  const v=Object.fromEntries(fields.map(id=>[id,Number(get(id).value)]));
+  const recurring=v.running+v.licenses+v.hours*v.rate;
+  const monthly=v.hardware/v.life+recurring;
+  const labor=v.days*v.dayrate;
+  set('monthly',fmt(monthly));set('per-person',fmt(monthly/5)+' per employee / month');
+  set('cash',fmt(recurring)+' recurring operating cost / month, excluding hardware');
+  set('initial',fmt(labor)+' implementation labor');
+  set('first-year',fmt(v.hardware+12*recurring+labor)+' first-year cost including hardware and implementation');
+ }
+ fields.forEach(id=>get(id).addEventListener('input',updateBudget));updateBudget();
+})();
+</script>
+</body>
+</html>
