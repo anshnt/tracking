@@ -1287,6 +1287,26 @@
         ]
       }
     },
+    "/api/auth/methods": {
+      "get": {
+        "description": "Which sign-in routes exist, so the web app can offer the dev form when there is no IdP.",
+        "operationId": "methods_api_auth_methods_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Methods",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/v1/admin/assets": {
       "get": {
         "operationId": "list_assets_api_v1_admin_assets_get",
