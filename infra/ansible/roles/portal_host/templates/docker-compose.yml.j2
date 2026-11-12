@@ -1,0 +1,45 @@
+# {{ ansible_managed }}
+# Portal API + worker. Postgres is on the data zone host. The migrator uses the owner role;
+# the runtime containers use the DML-only role (see infra/compose/postgres/portal-grants.sql,
+# run it once after the first migration).
+name: tracking-portal
+
+x-portal: &portal
+  image: {{ portal_image }}
+  restart: unless-stopped
+  env_file: portal.env
+  read_only: true
+  tmpfs: ["/tmp"]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+{% if portal_ca_bundle_src | length > 0 %}
+  volumes: ["./ca.pem:/etc/portal/ca.pem:ro"]
+{% endif %}
+
+services:
+  migrate:
+    <<: *portal
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    # migrate.env (0600) holds the owner-role URL; keep the secret out of this file.
+    env_file: [portal.env, migrate.env]
+    environment:
+      PORTAL_ENV: development
+
+  api:
+    <<: *portal
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    ports:
+      - "{{ portal_bind_ip }}:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    <<: *portal
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    command: ["python", "-m", "portal.worker"]

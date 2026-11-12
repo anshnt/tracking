@@ -1,0 +1,143 @@
+---
+- name: Refuse to run with placeholder secrets or checksums
+  ansible.builtin.assert:
+    that:
+      - backup_restic_password | length > 0
+      - backup_db_password | length > 0
+      - "'CHANGE_ME' not in backup_restic_password"
+      - "'CHANGE_ME' not in backup_db_password"
+      - "'TODO' not in restic_sha256"
+      - backup_repository | length > 0
+      - backup_ssh_private_key | length > 0
+      - "'CHANGE_ME' not in backup_ssh_private_key"
+      - backup_repo_host_key | length > 0
+      - "'CHANGE_ME' not in backup_repo_host_key"
+      - backup_repo_host_key.split()[0] == backup_repo_host
+    fail_msg: Fill vault_backup_restic_password, vault_backup_db_password, vault_restic_sha256, vault_backup_ssh_private_key and vault_backup_repo_host_key.
+
+- name: Install tools (pg_dump major must match the server major)
+  ansible.builtin.apt:
+    name: ["postgresql-client-{{ backup_pg_client_major }}", bzip2, coreutils, util-linux]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Download the pinned restic release, checksum verified
+  ansible.builtin.get_url:
+    url: "{{ restic_url }}"
+    dest: "/var/cache/restic-{{ restic_version }}.bz2"
+    checksum: "sha256:{{ restic_sha256 }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install the restic binary
+  ansible.builtin.shell: |
+    set -o pipefail
+    bunzip2 -c /var/cache/restic-{{ restic_version }}.bz2 > /usr/local/bin/restic-{{ restic_version }}
+    chmod 0755 /usr/local/bin/restic-{{ restic_version }}
+    ln -sfn /usr/local/bin/restic-{{ restic_version }} /usr/local/bin/restic
+  args:
+    executable: /bin/bash
+    creates: "/usr/local/bin/restic-{{ restic_version }}"
+
+- name: Private config and staging directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  loop: ["{{ backup_conf_dir }}", "{{ backup_staging_dir }}"]
+
+- name: Backup credentials (separate from every application credential)
+  ansible.builtin.copy:
+    dest: "{{ backup_conf_dir }}/{{ item.name }}"
+    content: "{{ item.content }}"
+    owner: root
+    group: root
+    mode: "0400"
+  loop:
+    - { name: restic-password, content: "{{ backup_restic_password }}" }
+    - name: pgpass
+      content: "{% for db in backup_databases %}{{ backup_db_host }}:{{ backup_db_port }}:{{ db }}:{{ backup_db_user }}:{{ backup_db_password }}\n{% endfor %}"
+    - name: env
+      content: |
+        RESTIC_REPOSITORY={{ backup_repository }}
+        RESTIC_PASSWORD_FILE={{ backup_conf_dir }}/restic-password
+        PGPASSFILE={{ backup_conf_dir }}/pgpass
+        RESTIC_CACHE_DIR=/var/cache/restic
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+
+- name: SSH identity and pinned host key for the sftp repository
+  ansible.builtin.copy:
+    dest: "{{ backup_conf_dir }}/{{ item.name }}"
+    content: "{{ item.content }}\n"
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - { name: id_ed25519, mode: "0400", content: "{{ backup_ssh_private_key | trim }}" }
+    - { name: known_hosts, mode: "0644", content: "{{ backup_repo_host_key | trim }}" }
+  loop_control:
+    label: "{{ item.name }}"
+  no_log: true
+
+# A system-wide ssh config, so the units work with ProtectHome and need no root home directory.
+- name: ssh client settings for the repository host (key only, host key pinned, never prompts)
+  ansible.builtin.copy:
+    dest: /etc/ssh/ssh_config.d/50-tracking-backup.conf
+    content: |
+      Host {{ backup_repo_host }}
+        IdentityFile {{ backup_conf_dir }}/id_ed25519
+        IdentitiesOnly yes
+        UserKnownHostsFile {{ backup_conf_dir }}/known_hosts
+        StrictHostKeyChecking yes
+        BatchMode yes
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Scripts
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: root
+    mode: "0750"
+  loop: [tracking-backup.sh, tracking-restore.sh, tracking-restore-test.sh]
+
+- name: systemd units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - tracking-backup.service
+    - tracking-backup.timer
+    - tracking-prune.service
+    - tracking-prune.timer
+    - tracking-restore-test.service
+    - tracking-restore-test.timer
+  notify: Reload systemd
+
+- name: Initialise the restic repository once (no-op if it exists)
+  ansible.builtin.shell: |
+    set -a; . {{ backup_conf_dir }}/env; set +a
+    restic cat config >/dev/null 2>&1 || restic init
+  args:
+    executable: /bin/bash
+  register: backup_repo_init
+  changed_when: "'created restic repository' in backup_repo_init.stdout"
+
+- name: Enable the timers
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: [tracking-backup.timer, tracking-prune.timer, tracking-restore-test.timer]

@@ -1,0 +1,16 @@
+.git
+.gitignore
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/node_modules
+apps/web/dist
+apps/api/tests
+**/.env
+**/.env.*
+!**/.env.example
+docs
+infra
+policies
+*.md

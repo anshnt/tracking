@@ -1,0 +1,15 @@
+---
+# restic_version, backup_* come from group_vars/all.yml; secrets from vault.
+backup_restic_password: "{{ vault_backup_restic_password | default('') }}"
+backup_db_password: "{{ vault_backup_db_password | default('') }}"
+restic_sha256: "{{ vault_restic_sha256 | default('TODO_SHA256') }}"   # sha256 of restic_<ver>_linux_amd64.bz2
+restic_url: "https://github.com/restic/restic/releases/download/v{{ restic_version }}/restic_{{ restic_version }}_linux_amd64.bz2"
+backup_ssh_private_key: "{{ vault_backup_ssh_private_key | default('') }}"      # dedicated key, only for the restic repository
+backup_repo_host_key: "{{ vault_backup_repo_host_key | default('') }}"           # one known_hosts line for backup_repo_host (ssh-keyscan -t ed25519, verified out of band)
+backup_db_user: backup
+backup_db_port: 5432
+backup_staging_dir: /var/backups/tracking-staging
+backup_conf_dir: /etc/tracking-backup
+backup_restore_test_scratch_db_url: ""   # optional: postgresql://.../scratch; full pg_restore into a scratch DB
+backup_gitea_container: ""
+backup_keycloak_export_cmd: ""

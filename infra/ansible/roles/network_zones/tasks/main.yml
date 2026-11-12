@@ -1,0 +1,64 @@
+---
+- name: Check the zone model before touching any firewall
+  ansible.builtin.assert:
+    that:
+      - nz_zone is defined
+      - nz_zone in nz_zones
+      - nz_zones.mgmt is defined
+      # workspace VMs may only talk to explicitly named hosts, never a whole zone
+      - nz_flows | selectattr('src', 'equalto', 'workspace') | rejectattr('destinations', 'defined') | list | length == 0
+      # and never to other workspaces, mgmt or data
+      - nz_flows | selectattr('src', 'equalto', 'workspace') | selectattr('dst', 'in', ['workspace', 'mgmt', 'data']) | list | length == 0
+      # only specific hosts (guacd) may reach workspace, and only on RDP
+      - nz_flows | selectattr('dst', 'equalto', 'workspace') | rejectattr('sources', 'defined') | list | length == 0
+      - nz_flows | selectattr('dst', 'equalto', 'workspace') | map(attribute='ports') | flatten | unique | difference([3389]) | length == 0
+    fail_msg: Zone model violates the isolation rules (see PLAN section 6 network policy).
+
+- name: Install nftables
+  ansible.builtin.apt:
+    name: nftables
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Disable IPv6 (the ruleset is IPv4 only)
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: "1"
+    sysctl_file: /etc/sysctl.d/60-no-ipv6.conf
+    reload: true
+  loop: [net.ipv6.conf.all.disable_ipv6, net.ipv6.conf.default.disable_ipv6]
+  when: nz_disable_ipv6 | bool
+
+- name: Create the rules directory
+  ansible.builtin.file:
+    path: /etc/nftables.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Install the zone ruleset (syntax checked with nft -c before it lands)
+  ansible.builtin.template:
+    src: portal-zones.nft.j2
+    dest: /etc/nftables.d/10-portal-zones.nft
+    owner: root
+    group: root
+    mode: "0600"
+    validate: /usr/sbin/nft -c -f %s
+  notify: Apply nftables zone rules
+
+- name: Load the rules directory at boot
+  ansible.builtin.lineinfile:
+    path: /etc/nftables.conf
+    line: 'include "/etc/nftables.d/*.nft"'
+    create: true
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Apply nftables zone rules
+
+- name: Enable the nftables service
+  ansible.builtin.service:
+    name: nftables
+    enabled: true

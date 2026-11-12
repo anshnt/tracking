@@ -1,0 +1,110 @@
+# Collection policy, PLAN section 9. Defaults for the MVP. This file is the reviewed source of
+# record; the portal does NOT load it. The employee notice reads the active policy_versions row
+# (falling back to COLLECTION_CATEGORIES in apps/api/portal/services/work.py). Keep all three
+# in step by hand; changing a state means a new version and employee notice.
+#   state: on        collected
+#          off       not collected; enabling needs a new policy version, notice and a privacy decision
+#          optional  collected only if the employee starts it (timers) or the owner enables it for a pilot
+#          excluded  never implemented, no setting can enable it
+#   locked: true     cannot be switched on by configuration at all (needs a code change and review)
+version: 1
+effective: "2026-11-12"
+principles:
+  - Collect a signal only if it answers a business question.
+  - Activity or time at a keyboard is never a productivity score.
+  - Unknown or stale data is shown as unknown, never as compliant.
+categories:
+  - id: tasks_deliverables
+    description: Tasks, review state, blockers, deliverable links
+    state: on
+    audience: [employee, manager]
+    retention_days: 365
+  - id: daily_update
+    description: Short daily narrative written by the employee
+    state: on
+    audience: [employee, manager]
+    retention_days: 365
+  - id: project_time
+    description: Employee-entered or knowingly started timer, edit history preserved
+    state: optional
+    audience: [employee, manager]
+    retention_days: 365
+  - id: workspace_session
+    description: Workspace start/end and authentication events
+    state: on
+    audience: [security, it]
+    retention_days: 90
+    note: Not proof of continuous effort.
+  - id: device_posture
+    description: Patch, encryption and agent health, company devices and server VMs only
+    state: on
+    audience: [it, security]
+    retention_days: 90
+    note: Stale or missing data is reported as unknown.
+  - id: export_privileged_actions
+    description: Export requests/approvals and privileged actions
+    state: on
+    audience: [security, approver]
+    retention_days: 180
+  - id: app_categories_idle
+    description: Coarse application categories and idle periods during disclosed work sessions
+    state: off
+    audience: []
+    retention_days: 30
+    note: Never a performance score.
+  - id: window_titles
+    description: Window titles
+    state: off
+    locked: true
+    audience: []
+    retention_days: 0
+    note: Titles contain customer data, secrets and personal information. Never collected.
+  - id: full_urls
+    description: Full URLs
+    state: off
+    locked: true
+    audience: []
+    retention_days: 0
+    note: Never collected.
+  - id: clipboard_content
+    description: Clipboard text or bodies
+    state: off
+    locked: true
+    audience: []
+    retention_days: 0
+    note: Clipboard transfer is blocked or allowed by gateway policy; the content is never stored.
+  - id: screenshots_recordings
+    description: Screenshots and full session recordings
+    state: off
+    locked: true
+    audience: []
+    retention_days: 0
+    note: Separate exceptional use case with its own notice, access and retention decision. Not implemented.
+  - id: keystrokes
+    description: Keystrokes
+    state: excluded
+    audience: []
+    retention_days: 0
+  - id: passwords
+    description: Passwords and credentials
+    state: excluded
+    audience: []
+    retention_days: 0
+  - id: personal_browsing
+    description: Personal browsing and personal accounts
+    state: excluded
+    audience: []
+    retention_days: 0
+  - id: camera_audio
+    description: Camera and microphone
+    state: excluded
+    audience: []
+    retention_days: 0
+retention_classes_days:
+  raw_work_activity: 30
+  security_session_metadata: 90
+  approval_privileged_records: 180
+  work_summaries: 365
+backup_retention:
+  note: Backups expire on rotation; a restore must re-apply deletion tombstones and legal holds.
+  max_snapshot_age_days: 180

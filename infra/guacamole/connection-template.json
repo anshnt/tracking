@@ -1,0 +1,29 @@
+{
+  "parentIdentifier": "ROOT",
+  "name": "REPLACE_workspace-username",
+  "protocol": "rdp",
+  "parameters": {
+    "hostname": "REPLACE_workspace-vm-hostname-or-ip",
+    "port": "3389",
+    "security": "tls",
+    "ignore-cert": "false",
+    "cert-tofu": "false",
+    "cert-fingerprints": "REPLACE_SHA256_FINGERPRINT_OF_XRDP_CERT",
+    "disable-copy": "true",
+    "disable-paste": "false",
+    "enable-drive": "false",
+    "disable-download": "true",
+    "disable-upload": "true",
+    "enable-printing": "false",
+    "enable-sftp": "false",
+    "enable-audio": "true",
+    "enable-audio-input": "false",
+    "enable-wallpaper": "false",
+    "resize-method": "display-update",
+    "console": "false"
+  },
+  "attributes": {
+    "max-connections": "1",
+    "max-connections-per-user": "1"
+  }
+}

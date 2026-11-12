@@ -1,0 +1,60 @@
+# Internal CA ("tls internal"): Caddy issues certs from its own local CA. Distribute
+# /data/caddy/pki/authorities/local/root.crt to laptops and to services that call each other over HTTPS.
+{
+	# no public ACME, admin API off
+	auto_https disable_redirects
+	admin off
+}
+
+# health endpoint for the compose healthcheck only (not published)
+:8081 {
+	respond /healthz 200
+}
+
+(secure_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		-Server
+	}
+}
+
+portal.{$LAB_DOMAIN} {
+	tls internal
+	import secure_headers
+	reverse_proxy portal-api:8000
+}
+
+auth.{$LAB_DOMAIN} {
+	tls internal
+	import secure_headers
+	# Keycloak admin console and master realm only from the management network.
+	@kc_admin path /admin /admin/* /realms/master /realms/master/*
+	@not_mgmt not remote_ip {$MGMT_CIDR}
+	handle @kc_admin {
+		handle @not_mgmt {
+			respond "forbidden" 403
+		}
+		reverse_proxy keycloak:8080
+	}
+	# metrics/health live on the management port 9000 and are never proxied
+	handle /metrics* {
+		respond "not found" 404
+	}
+	handle {
+		reverse_proxy keycloak:8080
+	}
+}
+
+desktop.{$LAB_DOMAIN} {
+	tls internal
+	import secure_headers
+	reverse_proxy guacamole:8080
+}
+
+git.{$LAB_DOMAIN} {
+	tls internal
+	import secure_headers
+	reverse_proxy gitea:3000
+}

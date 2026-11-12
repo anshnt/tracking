@@ -1,0 +1,8 @@
+---
+- name: Employee workspace VMs (xrdp desktop, Wazuh agent)
+  hosts: workspace_vms
+  vars_files:
+    - ../group_vars/vault.yml
+  roles:
+    - role: workspace_vm
+    - role: wazuh_agent

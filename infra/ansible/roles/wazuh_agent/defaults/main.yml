@@ -1,0 +1,9 @@
+---
+# wazuh_version and wazuh_manager_address come from group_vars/all.yml
+wazuh_agent_name: "{{ inventory_hostname }}"
+wazuh_registration_password: "{{ vault_wazuh_registration_password | default('') }}"
+wazuh_gpg_key_sha256: "{{ vault_wazuh_gpg_key_sha256 | default('TODO_SHA256') }}"
+wazuh_fim_dirs: []
+# Workspace VMs have no internet: the repo comes from the internal mirror and the signing key from the controller.
+wazuh_apt_uri: "{{ (common_apt_mirror ~ '/wazuh/4.x/apt/') if common_apt_mirror | length > 0 else 'https://packages.wazuh.com/4.x/apt/' }}"
+wazuh_key_file: "{{ playbook_dir }}/../files/GPG-KEY-WAZUH"   # download once from the official site and check its sha256

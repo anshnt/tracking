@@ -1,0 +1,8 @@
+---
+# portal_image, portal_bind_ip, public_origin, oidc_issuer come from group_vars/all.yml
+portal_dir: /opt/tracking-portal
+portal_database_url: "{{ vault_portal_database_url | default('') }}"
+portal_migrator_database_url: "{{ vault_portal_migrator_database_url | default('') }}"
+portal_oidc_client_secret: "{{ vault_oidc_client_secret | default('') }}"
+# optional: PEM of the internal CA that signed the IdP certificate (copied from the controller)
+portal_ca_bundle_src: ""

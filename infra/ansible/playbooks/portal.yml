@@ -1,0 +1,7 @@
+---
+- name: Portal host (api + worker)
+  hosts: portal_hosts
+  vars_files:
+    - ../group_vars/vault.yml
+  roles:
+    - role: portal_host

@@ -1,0 +1,133 @@
+---
+- name: Refuse to run with placeholder enrollment secrets or checksums
+  ansible.builtin.assert:
+    that:
+      - wazuh_manager_address | length > 0
+      - wazuh_registration_password | length > 0
+      - "'CHANGE_ME' not in wazuh_registration_password"
+      - "'TODO' not in wazuh_gpg_key_sha256"
+    fail_msg: Fill vault_wazuh_registration_password and vault_wazuh_gpg_key_sha256 (see vault.example.yml).
+
+- name: Checksum the Wazuh signing key kept on the controller
+  ansible.builtin.stat:
+    path: "{{ wazuh_key_file }}"
+    checksum_algorithm: sha256
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: wazuh_key_stat
+
+- name: The key must exist on the controller and match the vaulted checksum
+  ansible.builtin.assert:
+    that:
+      - wazuh_key_stat.stat.exists
+      - wazuh_key_stat.stat.checksum == wazuh_gpg_key_sha256
+    fail_msg: "Put the official Wazuh GPG key at {{ wazuh_key_file }}; its sha256 must equal vault_wazuh_gpg_key_sha256."
+
+- name: Install the Wazuh signing key from the controller
+  ansible.builtin.copy:
+    src: "{{ wazuh_key_file }}"
+    dest: /usr/share/keyrings/wazuh.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add the Wazuh apt repository
+  ansible.builtin.deb822_repository:
+    name: wazuh
+    types: [deb]
+    uris: ["{{ wazuh_apt_uri }}"]
+    suites: [stable]
+    components: [main]
+    signed_by: /usr/share/keyrings/wazuh.asc
+    state: present
+    enabled: true
+
+- name: Install the pinned agent version
+  ansible.builtin.apt:
+    name: "wazuh-agent={{ wazuh_version }}-1"
+    state: present
+    update_cache: true
+    allow_downgrade: false
+
+- name: Hold the package; upgrades happen deliberately, lab first
+  ansible.builtin.dpkg_selections:
+    name: wazuh-agent
+    selection: hold
+
+- name: Point the agent at the manager
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(<address>)[^<]*(</address>)'
+    replace: '\g<1>{{ wazuh_manager_address }}\g<2>'
+  notify: Restart wazuh-agent
+
+- name: Scoped collection, file integrity on named directories, auth and journal logs only
+  ansible.builtin.blockinfile:
+    path: /var/ossec/etc/ossec.conf
+    marker: "<!-- {mark} ANSIBLE MANAGED: tracking scope -->"
+    block: |
+      <ossec_config>
+        <syscheck>
+          <frequency>43200</frequency>
+      {% for d in wazuh_fim_dirs %}
+          <directories check_all="yes" report_changes="no">{{ d }}</directories>
+      {% endfor %}
+        </syscheck>
+        <localfile>
+          <log_format>journald</log_format>
+          <location>journald</location>
+          <filter field="SYSLOG_IDENTIFIER">sshd|xrdp|xrdp-sesman|sudo</filter>
+        </localfile>
+      </ossec_config>
+    insertafter: EOF
+  notify: Restart wazuh-agent
+
+- name: Enrollment password, readable by root and the wazuh group only
+  ansible.builtin.copy:
+    dest: /var/ossec/etc/authd.pass
+    content: "{{ wazuh_registration_password }}\n"
+    owner: root
+    group: wazuh
+    mode: "0640"
+  no_log: true
+
+- name: Check whether the agent is already enrolled
+  ansible.builtin.stat:
+    path: /var/ossec/etc/client.keys
+  register: wazuh_client_keys
+
+- name: Enroll with the manager (reads authd.pass, no password on the command line)
+  ansible.builtin.command: >-
+    /var/ossec/bin/agent-auth -m {{ wazuh_manager_address }} -A {{ wazuh_agent_name }}
+  when: not wazuh_client_keys.stat.exists or wazuh_client_keys.stat.size == 0
+  changed_when: true
+  notify: Restart wazuh-agent
+
+- name: Agent config and keys are not readable by employees
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: wazuh
+    mode: "0640"
+  loop: [/var/ossec/etc/ossec.conf, /var/ossec/etc/client.keys]
+
+- name: systemd drop-in, restart on failure
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/wazuh-agent.service.d/10-restart.conf
+    content: |
+      [Service]
+      Restart=always
+      RestartSec=5
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart wazuh-agent
+
+- name: Agent enabled and running
+  ansible.builtin.service:
+    name: wazuh-agent
+    state: started
+    enabled: true

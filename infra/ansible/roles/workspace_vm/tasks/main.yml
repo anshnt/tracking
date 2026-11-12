@@ -1,0 +1,146 @@
+---
+- name: One unprivileged employee per VM, with a password hash from the vault
+  ansible.builtin.assert:
+    that:
+      - workspace_employee.username is defined
+      - workspace_employee.uid is defined
+      - workspace_employee.username not in ['root', 'ops-admin']
+      - workspace_password_hash | length > 0
+      - "'CHANGE_ME' not in workspace_password_hash"
+    fail_msg: Set workspace_employee and vault_workspace_password_hash for this host.
+
+- name: Install desktop and xrdp, remove container runtimes, printing and removable-media helpers
+  block:
+    - name: Install desktop packages
+      ansible.builtin.apt:
+        name: "{{ workspace_packages }}"
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+    - name: Remove forbidden packages
+      ansible.builtin.apt:
+        name: "{{ workspace_forbidden_packages }}"
+        state: absent
+        purge: true
+
+- name: Groups for RDP access (xrdp-users has only the employee; xrdp-admins stays empty)
+  ansible.builtin.group:
+    name: "{{ item }}"
+    system: true
+  loop: [xrdp-users, xrdp-admins]
+
+- name: Create the employee account (no sudo, no extra groups)
+  ansible.builtin.user:
+    name: "{{ workspace_employee.username }}"
+    uid: "{{ workspace_employee.uid }}"
+    comment: "{{ workspace_employee.comment | default('') }}"
+    shell: /bin/bash
+    create_home: true
+    password: "{{ workspace_password_hash }}"
+    update_password: on_create
+    groups: [xrdp-users]
+    append: false          # drops sudo, docker and any other supplementary group
+  no_log: true
+
+- name: Home directory is private
+  ansible.builtin.file:
+    path: "/home/{{ workspace_employee.username }}"
+    mode: "0700"
+
+- name: Employee must not have sudo rights
+  ansible.builtin.command: "sudo -n -l -U {{ workspace_employee.username }}"
+  register: workspace_sudo_check
+  changed_when: false
+  failed_when: "'is not allowed to run sudo' not in workspace_sudo_check.stdout"
+
+- name: No container runtime socket on the VM
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  register: workspace_sockets
+  loop: [/var/run/docker.sock, /run/podman/podman.sock, /run/containerd/containerd.sock]
+
+- name: Fail if any container runtime socket exists
+  ansible.builtin.assert:
+    that: workspace_sockets.results | selectattr('stat.exists') | list | length == 0
+    fail_msg: A container runtime socket is present on a workspace VM.
+
+- name: Create a TLS certificate for xrdp (self-signed; its fingerprint is pinned in Guacamole)
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -x509 -newkey rsa:3072 -nodes -days {{ workspace_cert_days }}
+      -subj "/CN={{ inventory_hostname }}"
+      -addext "subjectAltName=DNS:{{ inventory_hostname }},IP:{{ ansible_host | default(inventory_hostname) }}"
+      -keyout /etc/xrdp/key.pem -out /etc/xrdp/cert.pem
+    creates: /etc/xrdp/cert.pem
+  notify: Restart xrdp
+
+- name: Key and certificate permissions
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    owner: root
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /etc/xrdp/key.pem, group: ssl-cert, mode: "0640" }
+    - { path: /etc/xrdp/cert.pem, group: root, mode: "0644" }
+
+- name: Record the certificate fingerprint for Guacamole pinning
+  ansible.builtin.shell: |
+    set -o pipefail
+    # Guacamole cert-fingerprints format: SHA256:AB:CD:... (uppercase, colon separated)
+    echo "SHA256:$(openssl x509 -in /etc/xrdp/cert.pem -noout -fingerprint -sha256 | cut -d= -f2 | tr a-f A-F)" > /etc/xrdp/cert.fingerprint
+    cat /etc/xrdp/cert.fingerprint
+  args:
+    executable: /bin/bash
+  register: workspace_fingerprint
+  changed_when: false
+
+- name: Show the fingerprint to paste into the Guacamole connection
+  ansible.builtin.debug:
+    msg: "xrdp cert fingerprint (Guacamole format) for {{ inventory_hostname }}: {{ workspace_fingerprint.stdout }}"
+
+- name: xrdp.ini, TLS only, no drive/printer redirection, clipboard channel per policy
+  community.general.ini_file:
+    path: /etc/xrdp/xrdp.ini
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    no_extra_spaces: true
+    mode: "0644"
+  loop:
+    - { section: Globals, option: security_layer, value: tls }
+    - { section: Globals, option: crypt_level, value: high }
+    - { section: Globals, option: ssl_protocols, value: "TLSv1.2, TLSv1.3" }
+    - { section: Globals, option: tls_ciphers, value: HIGH }
+    - { section: Globals, option: certificate, value: /etc/xrdp/cert.pem }
+    - { section: Globals, option: key_file, value: /etc/xrdp/key.pem }
+    - { section: Channels, option: rdpdr, value: "false" }      # drives, printers, smart cards
+    - { section: Channels, option: rail, value: "false" }
+    - { section: Channels, option: cliprdr, value: "{{ workspace_xrdp_clipboard_enabled | lower }}" }
+  notify: Restart xrdp
+
+- name: sesman.ini, who may log in and what chansrv may expose
+  community.general.ini_file:
+    path: /etc/xrdp/sesman.ini
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    no_extra_spaces: true
+    mode: "0644"
+  loop:
+    - { section: Security, option: AllowRootLogin, value: "false" }
+    - { section: Security, option: MaxLoginRetry, value: "3" }
+    - { section: Security, option: AlwaysGroupCheck, value: "true" }
+    - { section: Security, option: TerminalServerUsers, value: xrdp-users }
+    - { section: Security, option: TerminalServerAdmins, value: xrdp-admins }
+    - { section: Security, option: RestrictOutboundClipboard, value: "{{ workspace_xrdp_restrict_outbound_clipboard }}" }
+    - { section: Security, option: RestrictInboundClipboard, value: "{{ workspace_xrdp_restrict_inbound_clipboard }}" }
+    - { section: Chansrv, option: EnableFuseMount, value: "false" }   # no thinclient_drives mount
+  notify: Restart xrdp
+
+- name: xrdp enabled
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: [xrdp-sesman, xrdp]

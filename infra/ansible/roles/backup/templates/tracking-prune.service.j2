@@ -1,0 +1,16 @@
+[Unit]
+Description=Tracking backup retention (forget + prune)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile={{ backup_conf_dir }}/env
+# ponytail: this host holds write credentials, so a compromised source can also prune. Use an
+# append-only restic rest-server and prune from the backup host when that matters.
+ExecStart=/usr/local/bin/restic forget --tag tracking --keep-daily {{ backup_keep_daily }} --keep-weekly {{ backup_keep_weekly }} --keep-monthly {{ backup_keep_monthly }} --prune
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/run /var/cache
+ProtectHome=read-only
+NoNewPrivileges=true

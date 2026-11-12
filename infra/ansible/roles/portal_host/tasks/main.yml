@@ -1,0 +1,74 @@
+---
+- name: Refuse to run with placeholder secrets or image tag
+  ansible.builtin.assert:
+    that:
+      - "'CHANGE_ME' not in portal_database_url"
+      - "'CHANGE_ME' not in portal_migrator_database_url"
+      - "'CHANGE_ME' not in portal_oidc_client_secret"
+      - "'CHANGE_ME' not in portal_image"
+      - portal_database_url | length > 0
+      - portal_migrator_database_url | length > 0
+      - portal_oidc_client_secret | length > 0
+      - public_origin is match('^https://')
+    fail_msg: Fill the vault values and set portal_image to a built, pinned tag.
+
+- name: Install Docker engine and compose plugin from the distribution
+  ansible.builtin.apt:
+    name: [docker.io, docker-compose-v2]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Docker enabled
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Deployment directory
+  ansible.builtin.file:
+    path: "{{ portal_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Internal CA bundle for the IdP connection
+  ansible.builtin.copy:
+    src: "{{ portal_ca_bundle_src }}"
+    dest: "{{ portal_dir }}/ca.pem"
+    owner: root
+    group: root
+    mode: "0644"
+  when: portal_ca_bundle_src | length > 0
+
+- name: Environment file (secrets, 0600)
+  ansible.builtin.template:
+    src: portal.env.j2
+    dest: "{{ portal_dir }}/portal.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Migrator env file (schema-owner role, 0600)
+  ansible.builtin.copy:
+    dest: "{{ portal_dir }}/migrate.env"
+    content: "DATABASE_URL={{ portal_migrator_database_url }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ portal_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: Migrate, then start api and worker
+  community.docker.docker_compose_v2:
+    project_src: "{{ portal_dir }}"
+    state: present

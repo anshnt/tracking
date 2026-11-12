@@ -1,0 +1,8 @@
+---
+# nz_zone, nz_zones, nz_flows come from inventory / group_vars/all.yml.
+nz_docker_host: false          # true: also filter traffic to published container ports (see template)
+nz_output_drop_zones: [workspace]
+nz_internal_dns: []
+nz_ssh_port: 22
+nz_guacd_bridge: br-guac-rdp   # docker bridge of the guacd 'rdp' network (guacamole_host compose template)
+nz_disable_ipv6: true

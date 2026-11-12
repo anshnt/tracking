@@ -1,0 +1,29 @@
+# Reference for the Guacamole SAML extension (auth-sso-saml) and the PostgreSQL extension.
+# The compose lab sets these as environment variables (the image writes guacamole.properties);
+# this file documents the property names for a non-container deployment (/etc/guacamole/).
+# No secrets belong here: DB passwords come from the environment / vault.
+
+# --- SAML (IdP = Keycloak realm "tracking") ---
+saml-idp-metadata-url: https://auth.lab.test/realms/tracking/protocol/saml/descriptor
+# must equal the Keycloak SAML client's clientId
+saml-entity-id: https://desktop.lab.test
+# base URL of Guacamole as the browser sees it (assertion consumer endpoint)
+saml-callback-url: https://desktop.lab.test
+saml-strict: true
+saml-compress-request: true
+saml-compress-response: true
+
+# Do not also enable username/password logins in the browser: SAML first, password auth only for the DB
+# extension's internal accounts (guacadmin is disabled by guacamole-bootstrap.sql).
+extension-priority: saml
+
+# --- PostgreSQL ---
+postgresql-hostname: postgres
+postgresql-port: 5432
+postgresql-database: guacamole
+postgresql-username: guacamole
+# postgresql-password comes from POSTGRESQL_PASSWORD
+postgresql-auto-create-accounts: true
+
+# --- Behind the reverse proxy ---
+remote-ip-valve-enabled: true

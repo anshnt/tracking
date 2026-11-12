@@ -1,0 +1,14 @@
+---
+# Per host: workspace_employee = {username, uid, comment}; vault_workspace_password_hash in host_vars vault.
+workspace_employee: {}
+workspace_password_hash: "{{ vault_workspace_password_hash | default('') }}"
+
+# Clipboard on the VM side (second layer behind the Guacamole disable-copy/disable-paste flags).
+# xrdp >= 0.10 only: Debian 13 (trixie) ships 0.10.x; Ubuntu 24.04 ships 0.9.x and ignores these keys.
+workspace_xrdp_clipboard_enabled: true        # false = restricted profile, channel off entirely
+workspace_xrdp_restrict_outbound_clipboard: all   # VM -> client: nothing leaves
+workspace_xrdp_restrict_inbound_clipboard: none   # client -> VM: allowed (standard profile)
+
+workspace_packages: [xrdp, xorgxrdp, xfce4, xfce4-terminal, dbus-x11, openssl, sudo, firefox-esr]
+workspace_forbidden_packages: [docker.io, docker-ce, podman, containerd, runc, cups, cups-daemon, udisks2, gvfs-backends]
+workspace_cert_days: 730

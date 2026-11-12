@@ -1,0 +1,24 @@
+# Source of truth for Guacamole RDP connection parameters. infra/tests/validate.py checks that
+# connection-template*.json match this file. Values are strings because Guacamole stores strings.
+version: 1
+invariants:   # same in every profile; a profile may not override these
+  security: tls
+  ignore-cert: "false"
+  enable-drive: "false"
+  disable-download: "true"
+  disable-upload: "true"
+  enable-printing: "false"
+  enable-sftp: "false"
+  enable-audio-input: "false"
+  disable-copy: "true"          # remote -> local clipboard is always blocked
+profiles:
+  standard:
+    template: infra/guacamole/connection-template.json
+    use_for: [internal, confidential]
+    params:
+      disable-paste: "false"    # local -> remote paste allowed
+  restricted:
+    template: infra/guacamole/connection-template-restricted.json
+    use_for: [restricted]
+    params:
+      disable-paste: "true"

@@ -1,0 +1,6 @@
+---
+- name: Restart xrdp
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+  loop: [xrdp-sesman, xrdp]

@@ -1,0 +1,86 @@
+---
+# Non-secret settings shared by every role. Secrets live in vault.yml (see vault.example.yml).
+
+# ---- pinned versions: single source is infra/versions.env ----
+_versions_file: "{{ playbook_dir }}/../../versions.env"
+wazuh_version: "{{ lookup('ansible.builtin.ini', 'WAZUH_VERSION type=properties file=' ~ _versions_file) }}"
+restic_version: "{{ lookup('ansible.builtin.ini', 'RESTIC_VERSION type=properties file=' ~ _versions_file) }}"
+guacamole_version: "{{ lookup('ansible.builtin.ini', 'GUACAMOLE_VERSION type=properties file=' ~ _versions_file) }}"
+postgres_version: "{{ lookup('ansible.builtin.ini', 'POSTGRES_VERSION type=properties file=' ~ _versions_file) }}"
+
+# ---- common ----
+common_ntp_servers: [ntp.internal.example]   # internal time source; workspace VMs reach it via the ws-ntp flow
+common_ssh_admin_users: [ops-admin]
+common_ssh_extra_groups: [restic-sftp]   # backup01 only: the restic repository account (see backup_repo role)
+# Hosts that default-deny egress (nz_output_drop_zones) cannot reach the internet, so apt uses the internal mirror.
+# The mirror must serve /debian, /debian-security and /wazuh/4.x/apt/ (see infra/README.md).
+internal_mirror_url: https://mirror.internal.example
+common_apt_mirror: "{{ internal_mirror_url if nz_zone in nz_output_drop_zones else '' }}"
+
+# ---- network zones (example CIDRs; replace) ----
+nz_zones:
+  clients: 10.20.1.0/24        # office LAN / VPN pool where laptops (company or BYOD) connect from
+  edge: 10.20.10.0/24
+  app: 10.20.20.0/24
+  gateway: 10.20.30.0/24
+  workspace: 10.20.40.0/24
+  data: 10.20.50.0/24
+  mgmt: 10.20.60.0/24
+data_host: 10.20.50.10          # the Postgres host in the data zone
+nz_internal_dns: [10.20.20.2]
+nz_guacd_hosts: [10.20.30.10]     # the only addresses that may reach workspace RDP
+nz_wazuh_manager: 10.20.20.20
+nz_proxy_host: 10.20.10.10
+nz_git_host: 10.20.20.30
+nz_mirror_host: 10.20.20.31
+nz_backup_host: 10.20.60.10      # backup01: the restic sftp repository
+nz_ntp_host: 10.20.20.2
+nz_output_drop_zones: [workspace]
+nz_ssh_port: 22
+
+# src/dst are zone names. "sources"/"destinations" narrow a flow to specific hosts.
+nz_flows:
+  - { name: laptops-to-proxy-https,  src: clients, dst: edge,      proto: tcp, ports: [443] }
+  - { name: proxy-to-portal,         src: edge,    dst: app,       proto: tcp, ports: [8000, 8080] }
+  - { name: proxy-to-gateway,        src: edge,    dst: gateway,   proto: tcp, ports: [8080] }
+  - { name: app-to-idp-via-proxy,    src: app,     dst: edge,      proto: tcp, ports: [443] }
+  - { name: gateway-to-idp-via-proxy, src: gateway, dst: edge,     proto: tcp, ports: [443] }
+  - { name: app-to-db,               src: app,     dst: data,      proto: tcp, ports: [5432] }
+  - { name: gateway-to-db,           src: gateway, dst: data,      proto: tcp, ports: [5432] }
+  - { name: backup-to-db,            src: mgmt,    dst: data,      proto: tcp, ports: [5432] }
+  # the backup role runs on the data host and pushes to the repository on backup01 over sftp
+  - { name: backup-to-repo,          src: data,    dst: mgmt,      proto: tcp, ports: [22], sources: ["{{ data_host }}"], destinations: ["{{ nz_backup_host }}"] }
+  - name: guacd-to-workspace-rdp
+    src: gateway
+    dst: workspace
+    proto: tcp
+    ports: [3389]
+    sources: "{{ nz_guacd_hosts }}"
+  # workspace egress: named hosts only, never a whole zone (asserted by the role)
+  - { name: ws-wazuh,   src: workspace, dst: app , proto: tcp, ports: [1514, 1515], destinations: ["{{ nz_wazuh_manager }}"] }
+  - { name: ws-git,     src: workspace, dst: app,  proto: tcp, ports: [22, 443],     destinations: ["{{ nz_git_host }}"] }
+  - { name: ws-mirror,  src: workspace, dst: app , proto: tcp, ports: [443],         destinations: ["{{ nz_mirror_host }}"] }
+  - { name: ws-ntp,     src: workspace, dst: app , proto: udp, ports: [123],         destinations: ["{{ nz_ntp_host }}"] }
+  - { name: ws-portal,  src: workspace, dst: edge,  proto: tcp, ports: [443],         destinations: ["{{ nz_proxy_host }}"] }
+
+# ---- wazuh agent ----
+wazuh_manager_address: "{{ nz_wazuh_manager }}"
+wazuh_fim_dirs: []             # e.g. ["/home/alice/work"]: scoped, not the whole disk
+
+# ---- backups ----
+backup_repo_host: backup01.internal.example
+backup_repository: "sftp:restic@{{ backup_repo_host }}:/srv/restic/tracking"
+backup_databases: [keycloak, guacamole, portal]   # add gitea when that profile is used
+backup_db_host: "{{ data_host }}"
+backup_pg_client_major: 17
+backup_keep_daily: 14
+backup_keep_weekly: 8
+backup_keep_monthly: 5         # newest kept snapshot stays under the 180 day cap in policies/collection-policy.yaml
+backup_gitea_container: ""     # set to the container name to include `gitea dump`
+backup_keycloak_export_cmd: "" # optional realm export command, output dir passed as $1
+
+# ---- portal host ----
+portal_image: "registry.internal.example/tracking-portal:CHANGE_ME"
+portal_bind_ip: "{{ ansible_host }}"
+public_origin: "https://portal.lab.example"
+oidc_issuer: "https://auth.lab.example/realms/tracking"

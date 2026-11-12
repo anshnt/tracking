@@ -1,0 +1,12 @@
+---
+# Order matters: base hardening and firewall first, then services, then backup.
+- name: Baseline and firewall on every host
+  hosts: all
+  roles:
+    - role: common
+    - role: network_zones
+
+- ansible.builtin.import_playbook: workspaces.yml
+- ansible.builtin.import_playbook: gateway.yml
+- ansible.builtin.import_playbook: portal.yml
+- ansible.builtin.import_playbook: backup.yml
