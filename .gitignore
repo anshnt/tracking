@@ -10,4 +10,5 @@ dist/
 .coverage
 .hallmark-shots/
 .hallmark/
+site/.hallmark/
 *.tsbuildinfo
