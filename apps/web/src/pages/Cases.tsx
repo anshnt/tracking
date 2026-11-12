@@ -114,8 +114,8 @@ function Detail({ id, onChanged }: { id: string; onChanged: () => void }) {
           <p className="prose">{c.reason}</p>
           <KeyValue
             items={[
-              { label: "Owner", value: c.owner_id ? <IdCell id={c.owner_id} /> : "unassigned" },
-              { label: "Subject", value: c.subject_employee_id ? <IdCell id={c.subject_employee_id} /> : "not linked" },
+              { label: "Owner", value: c.owner_id ? c.owner_name ?? <IdCell id={c.owner_id} /> : "unassigned" },
+              { label: "Subject", value: c.subject_employee_id ? c.subject_name ?? <IdCell id={c.subject_employee_id} /> : "not linked" },
               { label: "Source", value: c.source ?? "none" },
               ...(c.closure_rationale ? [{ label: "Closure rationale", value: c.closure_rationale }] : []),
             ]}
@@ -152,8 +152,8 @@ function Detail({ id, onChanged }: { id: string; onChanged: () => void }) {
                       <Ts iso={a.created_at} />
                     </span>
                     <span>
-                      <strong>{a.action.replace(/_/g, " ")}</strong> by <span className="mono">{a.actor_id.slice(0, 8)}</span>{" "}
-                      <span className="muted wrap">{Object.keys(a.detail ?? {}).length ? JSON.stringify(a.detail) : ""}</span>
+                      <strong>{a.action.replace(/_/g, " ")}</strong> by {a.actor_name ?? <span className="mono">{a.actor_id.slice(0, 8)}</span>}{" "}
+                      <span className="muted wrap">{Object.entries(a.detail ?? {}).map(([k, v]) => `${k.replace(/_/g, " ")}: ${String(v)}`).join(", ")}</span>
                     </span>
                   </li>
                 ))}
