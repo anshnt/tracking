@@ -180,6 +180,7 @@ export interface OverviewPerson {
 export interface CaseAction {
   id: string;
   actor_id: string;
+  actor_name?: string | null;
   action: string;
   detail: Record<string, unknown>;
   created_at: string;
@@ -200,7 +201,9 @@ export interface Case {
   severity: string;
   status: string;
   owner_id: string | null;
+  owner_name?: string | null;
   subject_employee_id: string | null;
+  subject_name?: string | null;
   evidence_refs: unknown[];
   events?: CaseEvent[];
   source?: string | null;

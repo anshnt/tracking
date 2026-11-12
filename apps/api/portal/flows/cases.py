@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 
 from fastapi import HTTPException
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 
 from portal import audit
 from portal.jobs import job_handler
@@ -125,7 +125,20 @@ def event_summaries(db: Session, case: Case) -> list[dict]:
     ]
 
 
+def _names(case: Case, with_actions: bool) -> dict:
+    ids = {case.owner_id, case.subject_employee_id}
+    if with_actions:
+        ids |= {a.actor_id for a in case.actions}
+    ids.discard(None)
+    db = object_session(case)
+    if not ids or db is None:
+        return {}
+    rows = db.execute(select(Employee.id, Employee.display_name).where(Employee.id.in_(ids)))
+    return {i: n for i, n in rows}
+
+
 def view(case: Case, with_actions: bool = False, events: list[dict] | None = None) -> dict:
+    names = _names(case, with_actions)
     out = {
         "id": str(case.id),
         "title": case.title,
@@ -133,7 +146,9 @@ def view(case: Case, with_actions: bool = False, events: list[dict] | None = Non
         "severity": case.severity,
         "status": case.status,
         "owner_id": str(case.owner_id) if case.owner_id else None,
+        "owner_name": names.get(case.owner_id),
         "subject_employee_id": str(case.subject_employee_id) if case.subject_employee_id else None,
+        "subject_name": names.get(case.subject_employee_id),
         "evidence_refs": case.evidence_refs,
         "closure_rationale": case.closure_rationale,
         "created_at": case.created_at,
@@ -148,6 +163,7 @@ def view(case: Case, with_actions: bool = False, events: list[dict] | None = Non
             {
                 "id": str(a.id),
                 "actor_id": str(a.actor_id),
+                "actor_name": names.get(a.actor_id),
                 "action": a.action,
                 "detail": a.detail,
                 "created_at": a.created_at,

@@ -187,3 +187,19 @@ def test_case_detail_shows_source_and_evidence_metadata(client_for, db, sec, mak
     (shown,) = detail["events"]
     assert shown["id"] == str(ev.id) and shown["event_type"] == "usb.mass_storage"
     assert shown["metadata"] == {"rule_id": "5712"} and shown["resource"] == "usb:1234"
+
+
+def test_detail_names_subject_owner_and_actors(client_for, db, sec, make_employee):
+    subject, analyst = (
+        make_employee(display_name="Elena Ruiz"),
+        make_employee(roles=["security"], display_name="Ben Ito"),
+    )
+    case = flow.create_case_from_event(db, event(db, subject))
+    db.commit()
+    c = client_for(sec)
+    r = c.post(
+        f"/api/v1/cases/{case.id}/actions",
+        json={"action": "assign", "assignee_id": str(analyst.id)},
+    ).json()
+    assert (r["subject_name"], r["owner_name"]) == ("Elena Ruiz", "Ben Ito")
+    assert r["actions"][0]["actor_name"] == sec.display_name
