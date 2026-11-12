@@ -1,9 +1,10 @@
+import "../styles/team-security.css";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { get, post } from "../api/client";
 import type { ExportRequest } from "../api/types";
 import { hasRole } from "../lib/nav";
-import { Async, Empty, Field, Page, Result, useAction, useLoad, useMe } from "../components/ui";
+import { Async, Button, Field, Page, Result, Toolbar, useAction, useLoad, useMe } from "../components/ui";
 import { ExportSummary } from "./Exports";
 
 function Decide({ r, onDone }: { r: ExportRequest; onDone: () => void }) {
@@ -13,20 +14,20 @@ function Decide({ r, onDone }: { r: ExportRequest; onDone: () => void }) {
   async function go(decision: "approved" | "rejected") {
     if (await act.run(() => post(`/export-requests/${r.id}/decisions`, { decision, reason: reason.trim() || null }), `Recorded: ${decision}.`)) onDone();
   }
-  if (r.requester_id === me.id) return <p className="meta">This is your request. Another approver must decide it.</p>;
+  if (r.requester_id === me.id) return <p className="request-note">This is your request. Another approver must decide it.</p>;
   return (
     <div className="form">
       {r.classification === "restricted" && <p className="meta">Restricted: needs two distinct approvers, one after the other.</p>}
       <Field label="Reason (required to reject)">
         <input maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
       </Field>
-      <div className="row">
-        <button type="button" className="primary" disabled={act.busy} onClick={() => go("approved")}>
+      <div className="request-actions">
+        <Button variant="primary" disabled={act.busy} onClick={() => go("approved")}>
           Approve
-        </button>
-        <button type="button" disabled={act.busy || !reason.trim()} onClick={() => go("rejected")}>
+        </Button>
+        <Button variant="danger" disabled={act.busy || !reason.trim()} onClick={() => go("rejected")}>
           Reject
-        </button>
+        </Button>
       </div>
       <Result ok={act.ok} err={act.err} />
     </div>
@@ -50,9 +51,9 @@ function Release({ r, onDone }: { r: ExportRequest; onDone: () => void }) {
       <Field label="Delivery channel note">
         <input required maxLength={2000} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
-      <button className="primary" disabled={act.busy}>
+      <Button type="submit" variant="primary" disabled={act.busy}>
         Release
-      </button>
+      </Button>
       <Result ok={act.ok} err={act.err} />
     </form>
   );
@@ -75,38 +76,46 @@ export function ExportQueue() {
   const releaser = hasRole(me.roles, "approver", "it");
   return (
     <Page title="Export queue" lead="Approved destination, justification, expiry, reviewers and release receipts.">
-      <Field label="Filter by status">
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">Needs action (requested, reviewed, staged)</option>
-          <option value="all">All</option>
-          {["requested", "reviewed", "approved", "staged", "released", "rejected", "expired", "cancelled"].map((s) => (
-            <option key={s}>{s}</option>
-          ))}
-        </select>
-      </Field>
-      <Async load={list}>
-        {({ rows, truncated }) =>
-          rows.length === 0 ? (
-            <Empty>No export requests.</Empty>
-          ) : (
-            <>
-            {truncated && <p className="msg err" role="alert">Showing the newest {QUEUE_LIMIT} only. Older requests are hidden: filter by status.</p>}
-            <ul className="stack">
+      <Toolbar label="Queue filters">
+        <Field label="Filter by status">
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">Needs action (requested, reviewed, staged)</option>
+            <option value="all">All</option>
+            {["requested", "reviewed", "approved", "staged", "released", "rejected", "expired", "cancelled"].map((s) => (
+              <option key={s}>{s}</option>
+            ))}
+          </select>
+        </Field>
+      </Toolbar>
+      <Async
+        load={list}
+        skeleton="lines"
+        rows={6}
+        isEmpty={(d) => d.rows.length === 0}
+        empty={<p className="state-body">No export requests match this filter. Requests appear here when someone asks to export controlled data.</p>}
+      >
+        {({ rows, truncated }) => (
+          <>
+            {truncated && (
+              <p className="msg err" role="alert">
+                Showing the newest {QUEUE_LIMIT} only. Older requests are hidden: filter by status.
+              </p>
+            )}
+            <ul className="requests" aria-label="Export requests">
               {rows.map((r) => {
                 const own = r.requester_id === me.id;
                 return (
-                  <li key={r.id} className="card">
+                  <li key={r.id} className="panel">
                     <ExportSummary r={r} />
-                    {own && <p className="muted">This is your own request, so you cannot decide or release it.</p>}
+                    {own && <p className="request-note">This is your own request, so you cannot decide or release it.</p>}
                     {!own && approver && (r.status === "requested" || r.status === "reviewed") && <Decide r={r} onDone={list.reload} />}
                     {!own && releaser && r.status === "staged" && <Release r={r} onDone={list.reload} />}
                   </li>
                 );
               })}
             </ul>
-            </>
-          )
-        }
+          </>
+        )}
       </Async>
     </Page>
   );

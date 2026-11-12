@@ -3,7 +3,8 @@ import type { FormEvent } from "react";
 import { get, post } from "../api/client";
 import { CLASSIFICATIONS } from "../api/types";
 import type { Classification, ExportRequest } from "../api/types";
-import { Async, Empty, Field, Page, Result, StatusTag, Ts, useAction, useLoad, useMe } from "../components/ui";
+import { Async, Button, EmptyState, Field, Page, Panel, Result, Section, StatusTag, Ts, useAction, useLoad, useMe } from "../components/ui";
+import "../styles/employee.css";
 
 // Approver/it/admin get a company-wide list from the API, so ask for the caller's own and the max page.
 export const MY_EXPORTS_URL = "/export-requests?mine=true&limit=500";
@@ -31,9 +32,8 @@ function Request({ onSaved }: { onSaved: () => void }) {
     }
   }
   return (
-    <form className="card form" onSubmit={submit}>
-      <h2>Request an export</h2>
-      <p className="meta">A different person must approve it. Nothing leaves until it is approved, staged and released.</p>
+    <Panel title="Request an export" hint="A different person must approve it. Nothing leaves until it is approved, staged and released.">
+    <form className="form" onSubmit={submit}>
       <Field label="Object reference" hint="Path or ID of the file inside the approved export area">
         <input required maxLength={512} value={f.object_ref} onChange={set("object_ref")} />
       </Field>
@@ -56,11 +56,12 @@ function Request({ onSaved }: { onSaved: () => void }) {
       <Field label="Business purpose">
         <textarea required rows={3} maxLength={2000} value={f.purpose} onChange={set("purpose")} />
       </Field>
-      <button className="primary" disabled={act.busy}>
+      <Button type="submit" variant="primary" disabled={act.busy}>
         Submit request
-      </button>
+      </Button>
       <Result ok={act.ok} err={act.err} />
     </form>
+    </Panel>
   );
 }
 
@@ -68,48 +69,53 @@ export function Receipt({ r }: { r: ExportRequest }) {
   if (!r.release_receipt) return null;
   const rc = r.release_receipt;
   return (
-    <dl className="kv" aria-label="Release receipt">
-      <dt>Released at</dt>
-      <dd>
-        <Ts iso={rc.released_at} />
-      </dd>
-      <dt>Recipient</dt>
-      <dd>{rc.recipient}</dd>
-      <dt>Checksum</dt>
-      <dd className="mono wrap">{rc.checksum}</dd>
-      <dt>Channel note</dt>
-      <dd>{rc.channel_note}</dd>
-      {r.expires_at && (
-        <>
-          <dt>Copy expires</dt>
-          <dd>
-            <Ts iso={r.expires_at} />
-          </dd>
-        </>
-      )}
-    </dl>
+    <div className="e-receipt">
+      <dl className="e-dl" aria-label="Release receipt">
+        <dt>Released at</dt>
+        <dd>
+          <Ts iso={rc.released_at} />
+        </dd>
+        <dt>Recipient</dt>
+        <dd>{rc.recipient}</dd>
+        <dt>Checksum</dt>
+        <dd className="mono">{rc.checksum}</dd>
+        <dt>Channel note</dt>
+        <dd>{rc.channel_note}</dd>
+        {r.expires_at && (
+          <>
+            <dt>Copy expires</dt>
+            <dd>
+              <Ts iso={r.expires_at} />
+            </dd>
+          </>
+        )}
+      </dl>
+    </div>
   );
 }
 
 export function ExportSummary({ r }: { r: ExportRequest }) {
   return (
     <>
-      <h3 className="wrap">{r.object_ref}</h3>
-      <p className="meta">
-        <StatusTag status={r.status} /> {r.classification}. To {r.recipient}. Requested <Ts iso={r.created_at} />.
+      <div className="e-head">
+        <h3 className="mono">{r.object_ref}</h3>
+        <StatusTag status={r.status} />
+      </div>
+      <p className="e-sub">
+        {r.classification}. To {r.recipient}. Requested <Ts iso={r.created_at} />.
       </p>
-      <p className="prose">{r.purpose}</p>
-      <p className="meta mono wrap">
+      <p className="e-body">{r.purpose}</p>
+      <p className="e-sub mono">
         {r.object_version ? `version ${r.object_version}, ` : ""}sha256 {r.object_checksum}
       </p>
       {r.decisions.map((d, i) => (
-        <p key={i} className="meta">
+        <p key={i} className="e-sub">
           Decision: {d.decision} <Ts iso={d.created_at} />
           {d.reason ? `, ${d.reason}` : ""}
         </p>
       ))}
-      {r.stage_error && <p className="msg err">Staging failed: {r.stage_error}</p>}
-      {r.status === "approved" && <p className="muted">Approved, waiting for the worker to stage the file.</p>}
+      {r.stage_error && <p className="e-blocker">Staging failed: {r.stage_error}</p>}
+      {r.status === "approved" && <p className="e-sub">Approved, waiting for the worker to stage the file.</p>}
       <Receipt r={r} />
     </>
   );
@@ -119,7 +125,7 @@ function Cancel({ id, onDone }: { id: string; onDone: () => void }) {
   const act = useAction();
   const [reason, setReason] = useState("");
   return (
-    <details>
+    <details className="e-details">
       <summary>Cancel this request</summary>
       <form
         className="form"
@@ -131,7 +137,9 @@ function Cancel({ id, onDone }: { id: string; onDone: () => void }) {
         <Field label="Reason">
           <input required maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
         </Field>
-        <button disabled={act.busy}>Confirm cancel</button>
+        <Button type="submit" variant="danger" disabled={act.busy}>
+          Confirm cancel
+        </Button>
         <Result ok={act.ok} err={act.err} />
       </form>
     </details>
@@ -142,26 +150,28 @@ export function Exports() {
   const me = useMe();
   const list = useLoad(() => get<ExportRequest[]>(MY_EXPORTS_URL));
   return (
-    <Page title="My exports">
-      <Request onSaved={list.reload} />
-      <h2>My requests</h2>
-      <Async load={list}>
-        {(all) => {
-          const mine = onlyMine(all, me.id);
-          return mine.length === 0 ? (
-            <Empty>You have not requested an export.</Empty>
-          ) : (
-            <ul className="stack">
-              {mine.map((r) => (
-                <li key={r.id} className="card">
-                  <ExportSummary r={r} />
-                  {!FINAL.includes(r.status) && <Cancel id={r.id} onDone={list.reload} />}
-                </li>
-              ))}
-            </ul>
-          );
-        }}
-      </Async>
+    <Page title="My exports" lead="Every request needs a second person to approve it before anything is released.">
+      <div className="e-two">
+        <Request onSaved={list.reload} />
+        <Section title="My requests">
+          <Async
+            load={list}
+            isEmpty={(all) => onlyMine(all, me.id).length === 0}
+            empty={<EmptyState title="No export requests">Use the form to ask for a file. Its status, decisions and release receipt will show here.</EmptyState>}
+          >
+            {(all) => (
+              <ul className="e-rows">
+                {onlyMine(all, me.id).map((r) => (
+                  <li key={r.id}>
+                    <ExportSummary r={r} />
+                    {!FINAL.includes(r.status) && <Cancel id={r.id} onDone={list.reload} />}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Async>
+        </Section>
+      </div>
     </Page>
   );
 }

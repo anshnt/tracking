@@ -1,6 +1,8 @@
 import { get, post } from "../api/client";
 import type { CollectionPolicy } from "../api/types";
-import { Async, Empty, Page, Result, Tag, Ts, useAction, useLoad, useMe } from "../components/ui";
+import { Async, Button, EmptyState, NoticeCard, Page, Result, StatusPill, Ts, useAction, useLoad, useMe } from "../components/ui";
+import { collectionDefault } from "./Records";
+import "../styles/employee.css";
 
 export function Home() {
   const me = useMe();
@@ -9,52 +11,83 @@ export function Home() {
 
   return (
     <Page title={`Hello, ${me.display_name}`} lead="This portal records only what the notice below lists.">
-      <Async load={load}>
-        {({ policy }) =>
-          !policy ? (
-            <Empty>No monitoring notice applies to you yet. Ask your administrator for the contact person.</Empty>
-          ) : (
-            <article className="card" aria-labelledby="notice-h">
-              <h2 id="notice-h">Monitoring and collection notice</h2>
-              <p className="meta">
-                {policy.name}, version {policy.version}. In force since <Ts iso={policy.activates_at} />
-                {policy.expires_at && (
-                  <>
-                    , until <Ts iso={policy.expires_at} />
-                  </>
-                )}
-                . {policy.is_exception && <Tag tone="warn">Exception for you</Tag>}
-              </p>
-              <p className="prose">{policy.notice_text ?? "No notice text was provided."}</p>
-              <p>
-                Questions or objections: <strong>{policy.contact ?? "not set, ask your administrator"}</strong>
-              </p>
-              <p className="meta mono">Content hash {policy.content_hash.slice(0, 16)}</p>
-              {policy.acknowledged_at ? (
-                <p>
-                  <Tag tone="ok" mark={"✓"}>
-                    Acknowledged
-                  </Tag>{" "}
-                  <Ts iso={policy.acknowledged_at} />
-                </p>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="primary"
-                    disabled={act.busy}
-                    onClick={async () => {
-                      if (await act.run(() => post("/me/notice-acknowledgements", { policy_version_id: policy.id }), "Notice acknowledged.")) load.reload();
-                    }}
-                  >
-                    I have read this notice
-                  </button>
-                  <Result ok={act.ok} err={act.err} />
-                </>
-              )}
-            </article>
-          )
+      <Async
+        load={load}
+        skeleton="block"
+        isEmpty={(d) => !d.policy}
+        empty={
+          <EmptyState title="No monitoring notice applies to you yet">
+            Your administrator assigns the notice. Ask them for the contact person if you expected one.
+          </EmptyState>
         }
+      >
+        {({ policy, categories }) => {
+          if (!policy) return null;
+          const isNever = (c: { default: string; visible_to: string }) => c.default === "off" || c.default === "excluded" || /^(not|never) collected/i.test(c.visible_to);
+          const recorded = categories.filter((c) => !isNever(c));
+          const never = categories.filter(isNever);
+          return (
+            <NoticeCard
+              title="Monitoring and collection notice"
+              status={
+                policy.acknowledged_at ? (
+                  <StatusPill tone="ok">Acknowledged</StatusPill>
+                ) : (
+                  <StatusPill tone="warn">Needs your acknowledgement</StatusPill>
+                )
+              }
+              meta={
+                <>
+                  {policy.name}, version <span className="mono">{policy.version}</span>. In force since <Ts iso={policy.activates_at} />
+                  {policy.expires_at && (
+                    <>
+                      , until <Ts iso={policy.expires_at} />
+                    </>
+                  )}
+                  . {policy.is_exception && <StatusPill tone="warn">Exception for you</StatusPill>}
+                </>
+              }
+              recorded={recorded.map((c) => (
+                <span className="e-sig" key={c.signal}>
+                  <strong>{c.signal}</strong>
+                  <span>
+                    {collectionDefault(c.default)}. Seen by {c.visible_to}.
+                  </span>
+                </span>
+              ))}
+              never={never.map((c) => (
+                <span className="e-sig" key={c.signal}>
+                  <strong>{c.signal}</strong>
+                </span>
+              ))}
+              pending={!policy.acknowledged_at}
+              contact={policy.contact ?? "not set, ask your administrator"}
+              hash={policy.content_hash}
+              action={
+                policy.acknowledged_at ? (
+                  <span className="e-ack">
+                    You acknowledged this notice on <Ts iso={policy.acknowledged_at} />
+                  </span>
+                ) : (
+                  <>
+                    <Button
+                      variant="primary"
+                      disabled={act.busy}
+                      onClick={async () => {
+                        if (await act.run(() => post("/me/notice-acknowledgements", { policy_version_id: policy.id }), "Notice acknowledged.")) load.reload();
+                      }}
+                    >
+                      I have read this notice
+                    </Button>
+                    <Result ok={act.ok} err={act.err} />
+                  </>
+                )
+              }
+            >
+              {policy.notice_text ?? "No notice text was provided."}
+            </NoticeCard>
+          );
+        }}
       </Async>
     </Page>
   );
