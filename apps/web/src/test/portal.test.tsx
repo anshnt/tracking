@@ -121,3 +121,18 @@ describe("export queue", () => {
     expect(queueUrls("all")).toEqual([`/export-requests?limit=${QUEUE_LIMIT}`]);
   });
 });
+
+describe("timestamps and posture reasons", () => {
+  it("formats an instant in the viewer's zone instead of falling back to ISO", async () => {
+    const { formatTs } = await import("../lib/time");
+    const out = formatTs("2026-11-12T10:57:57Z", "Europe/London");
+    expect(out).not.toContain("T10:57");
+    expect(out).toMatch(/2026/);
+  });
+  it("names every reason code the API returns in plain words", async () => {
+    const { postureReason } = await import("../lib/posture");
+    for (const code of ["no_asset", "no_heartbeat", "future_observation", "stale_heartbeat"]) {
+      expect(postureReason(code)).not.toBe(code);
+    }
+  });
+});

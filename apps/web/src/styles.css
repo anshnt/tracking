@@ -414,3 +414,9 @@ dl.kv dd {
     transition: none !important;
   }
 }
+
+.center .form {
+  width: min(100%, 28rem);
+  margin-inline: auto;
+  text-align: start;
+}

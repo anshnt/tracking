@@ -21,6 +21,9 @@ export function postureBadge(state: string): Badge {
 
 const REASONS: Record<string, string> = {
   personal_device: "Personal device: nothing is checked or collected.",
+  no_asset: "No device is linked to this workspace.",
+  no_heartbeat: "The device agent has not reported a heartbeat.",
+  future_observation: "The device clock is ahead; the observation is not trusted.",
   no_observation: "No observation has been received yet.",
   stale_observation: "The last observation is too old to trust.",
   expired_observation: "The last observation has expired.",
