@@ -2,7 +2,7 @@ import type { PostureState } from "../api/types";
 
 export interface Badge {
   label: string;
-  tone: "ok" | "bad" | "warn" | "muted";
+  tone: "ok" | "bad" | "warn" | "muted" | "unknown";
   /** Symbol so the state is never conveyed by colour alone. */
   mark: string;
 }
@@ -10,7 +10,7 @@ export interface Badge {
 const MAP: Record<PostureState, Badge> = {
   compliant: { label: "Compliant", tone: "ok", mark: "✓" },
   noncompliant: { label: "Noncompliant", tone: "bad", mark: "!" },
-  unknown: { label: "Unknown", tone: "warn", mark: "?" },
+  unknown: { label: "Unknown", tone: "unknown", mark: "?" },
   not_applicable: { label: "Not applicable", tone: "muted", mark: "-" },
 };
 

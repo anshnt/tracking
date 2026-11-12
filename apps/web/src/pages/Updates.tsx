@@ -2,32 +2,31 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { get, post, put } from "../api/client";
 import type { Deliverable, WorkUpdate } from "../api/types";
-import { Async, Empty, Field, Page, Result, Ts, useAction, useLoad, useMe } from "../components/ui";
+import { Async, Button, EmptyState, Field, Page, Panel, Result, Section, Ts, useAction, useLoad, useMe } from "../components/ui";
 import { todayIn } from "../lib/time";
+import "../styles/employee.css";
 
 const csv = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
 function Deliverables({ value, onChange }: { value: Deliverable[]; onChange: (v: Deliverable[]) => void }) {
   const set = (i: number, d: Deliverable) => onChange(value.map((x, j) => (j === i ? d : x)));
   return (
-    <fieldset>
+    <fieldset className="e-fieldset">
       <legend>Deliverables (optional)</legend>
       {value.map((d, i) => (
-        <div className="row" key={i}>
+        <div className="e-del" key={i}>
           <Field label={`Deliverable ${i + 1} title`}>
             <input value={d.title} maxLength={200} onChange={(e) => set(i, { ...d, title: e.target.value })} />
           </Field>
           <Field label={`Deliverable ${i + 1} link`} hint="http(s) only">
             <input type="url" value={d.url ?? ""} onChange={(e) => set(i, { ...d, url: e.target.value })} />
           </Field>
-          <button type="button" onClick={() => onChange(value.filter((_, j) => j !== i))}>
+          <Button variant="quiet" onClick={() => onChange(value.filter((_, j) => j !== i))}>
             Remove
-          </button>
+          </Button>
         </div>
       ))}
-      <button type="button" onClick={() => onChange([...value, { title: "", url: "" }])}>
-        Add deliverable
-      </button>
+      <Button onClick={() => onChange([...value, { title: "", url: "" }])}>Add deliverable</Button>
     </fieldset>
   );
 }
@@ -59,9 +58,8 @@ function NewUpdate({ onSaved }: { onSaved: () => void }) {
   }
 
   return (
-    <form className="card form" onSubmit={submit}>
-      <h2>Write an update</h2>
-      <p className="meta">Your update can cover meetings, research and offline work too. One per day; you can correct it later and the history is kept.</p>
+    <Panel title="Write an update" hint="Your update can cover meetings, research and offline work too. One per day; you can correct it later and the history is kept.">
+    <form className="form" onSubmit={submit}>
       <Field label="Date" hint={`Your timezone: ${me.timezone}`}>
         <input type="date" required value={date} max={todayIn(me.timezone)} onChange={(e) => setDate(e.target.value)} />
       </Field>
@@ -75,11 +73,12 @@ function NewUpdate({ onSaved }: { onSaved: () => void }) {
         <input value={refs} onChange={(e) => setRefs(e.target.value)} />
       </Field>
       <Deliverables value={dels} onChange={setDels} />
-      <button className="primary" disabled={act.busy}>
+      <Button type="submit" variant="primary" disabled={act.busy}>
         Save update
-      </button>
+      </Button>
       <Result ok={act.ok} err={act.err} />
     </form>
+    </Panel>
   );
 }
 
@@ -107,7 +106,9 @@ function Correct({ u, onSaved }: { u: WorkUpdate; onSaved: () => void }) {
       <Field label="Reason for the correction">
         <input required maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} />
       </Field>
-      <button disabled={act.busy}>Save correction</button>
+      <Button type="submit" variant="primary" disabled={act.busy}>
+        Save correction
+      </Button>
       <Result ok={act.ok} err={act.err} />
     </form>
   );
@@ -117,36 +118,40 @@ function UpdateRow({ u, onChanged }: { u: WorkUpdate; onChanged: () => void }) {
   const [open, setOpen] = useState(false);
   const detail = useLoad(() => (open ? get<WorkUpdate>(`/work-updates/${u.id}`) : Promise.resolve(u)), [open, u.updated_at]);
   return (
-    <li className="card">
-      <h3>{u.update_date}</h3>
-      <p className="prose">{u.summary}</p>
-      {u.blocker && <p className="msg err">Blocker: {u.blocker}</p>}
-      <p className="meta">
+    <li>
+      <div className="e-head">
+        <h3 className="mono">{u.update_date}</h3>
+        <Button variant="quiet" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {open ? "Hide history and correction" : "Corrections"}
+        </Button>
+      </div>
+      <p className="e-body">{u.summary}</p>
+      {u.blocker && <p className="e-blocker">Blocker: {u.blocker}</p>}
+      <p className="e-sub">
         Last saved <Ts iso={u.updated_at} />. {u.correction_count > 0 ? `${u.correction_count} correction(s).` : "No corrections."}
       </p>
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
-        {open ? "Hide history and correction" : "Corrections"}
-      </button>
       {open && (
-        <Async load={detail}>
-          {(d) => (
-            <div>
-              {d.corrections && d.corrections.length > 0 ? (
-                <ol className="plain">
-                  {d.corrections.map((c) => (
-                    <li key={c.id}>
-                      <Ts iso={c.created_at} />: {c.reason}
-                      <blockquote>{c.previous.summary}</blockquote>
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="muted">No earlier versions.</p>
-              )}
-              <Correct u={d} onSaved={onChanged} />
-            </div>
-          )}
-        </Async>
+        <div className="e-fine">
+          <Async load={detail} skeleton="lines" rows={3}>
+            {(d) => (
+              <>
+                {d.corrections && d.corrections.length > 0 ? (
+                  <ol>
+                    {d.corrections.map((c) => (
+                      <li key={c.id}>
+                        <Ts iso={c.created_at} />: {c.reason}
+                        <blockquote>{c.previous.summary}</blockquote>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="e-sub">No earlier versions.</p>
+                )}
+                <Correct u={d} onSaved={onChanged} />
+              </>
+            )}
+          </Async>
+        </div>
       )}
     </li>
   );
@@ -155,22 +160,25 @@ function UpdateRow({ u, onChanged }: { u: WorkUpdate; onChanged: () => void }) {
 export function Updates() {
   const list = useLoad(() => get<{ work_updates: WorkUpdate[] }>("/work-updates"));
   return (
-    <Page title="Daily update">
-      <NewUpdate onSaved={list.reload} />
-      <h2>History</h2>
-      <Async load={list}>
-        {({ work_updates }) =>
-          work_updates.length === 0 ? (
-            <Empty>You have not written an update yet.</Empty>
-          ) : (
-            <ul className="stack">
-              {work_updates.map((u) => (
-                <UpdateRow key={u.id} u={u} onChanged={list.reload} />
-              ))}
-            </ul>
-          )
-        }
-      </Async>
+    <Page title="Daily update" lead="One short note a day. Corrections keep the earlier text.">
+      <div className="e-two">
+        <NewUpdate onSaved={list.reload} />
+        <Section title="History">
+          <Async
+            load={list}
+            isEmpty={(d) => d.work_updates.length === 0}
+            empty={<EmptyState title="No updates yet">Write your first one with the form. It will appear here with its correction history.</EmptyState>}
+          >
+            {({ work_updates }) => (
+              <ul className="e-rows">
+                {work_updates.map((u) => (
+                  <UpdateRow key={u.id} u={u} onChanged={list.reload} />
+                ))}
+              </ul>
+            )}
+          </Async>
+        </Section>
+      </div>
     </Page>
   );
 }

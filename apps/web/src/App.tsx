@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
-import { NavLink, Route, Routes } from "react-router-dom";
-import { ApiError, LOGIN_URL, get, post } from "./api/client";
+import { Route, Routes } from "react-router-dom";
+import { ApiError, LOGIN_URL, get } from "./api/client";
 import type { Me } from "./api/types";
-import { MeContext, errText } from "./components/ui";
+import { AppFrame, SideNav } from "./components/Shell";
+import { EmptyState, ErrorState, MeContext, Skeleton, errText } from "./components/ui";
 import { navFor } from "./lib/nav";
 import { Admin } from "./pages/Admin";
 import { Cases } from "./pages/Cases";
@@ -38,76 +39,33 @@ const PAGES: Record<string, ReactElement> = {
   "/admin": <Admin />,
 };
 
-export function SideNav({ me }: { me: Me }) {
-  const items = navFor(me.roles);
-  const groups = [...new Set(items.map((i) => i.group))];
-  return (
-    <nav aria-label="Main">
-      {groups.map((g) => (
-        <div key={g}>
-          <h2 className="navgroup">{g}</h2>
-          <ul className="plain">
-            {items
-              .filter((i) => i.group === g)
-              .map((i) => (
-                <li key={i.to}>
-                  <NavLink to={i.to} end={i.to === "/"}>
-                    {i.label}
-                  </NavLink>
-                </li>
-              ))}
-          </ul>
-        </div>
-      ))}
-    </nav>
-  );
-}
+export { SideNav };
 
 export function Shell({ me }: { me: Me }) {
   const allowed = new Set(navFor(me.roles).map((i) => i.to));
   return (
     <MeContext.Provider value={me}>
-      <a className="skip" href="#main">
-        Skip to content
-      </a>
-      <header className="top">
-        <strong>Work and Security Portal</strong>
-        <span className="muted">
-          {me.display_name} ({me.roles.join(", ")}). Times shown in {me.timezone}.
-        </span>
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              await post("/api/auth/logout");
-            } finally {
-              window.location.assign("/");
-            }
-          }}
-        >
-          Sign out
-        </button>
-      </header>
-      <div className="layout">
-        <SideNav me={me} />
-        <main id="main" tabIndex={-1}>
-          <Routes>
-            {Object.entries(PAGES).map(([path, el]) => (
-              <Route key={path} path={path} element={allowed.has(path) ? el : <NotAllowed />} />
-            ))}
-            <Route path="*" element={<NotAllowed />} />
-          </Routes>
-        </main>
-      </div>
+      <AppFrame me={me}>
+        <Routes>
+          {Object.entries(PAGES).map(([path, el]) => (
+            <Route key={path} path={path} element={allowed.has(path) ? el : <NotAllowed />} />
+          ))}
+          <Route path="*" element={<NotAllowed />} />
+        </Routes>
+      </AppFrame>
     </MeContext.Provider>
   );
 }
 
 function NotAllowed() {
   return (
-    <section>
-      <h1>Not available</h1>
-      <p>This page does not exist or is not part of your role.</p>
+    <section className="page">
+      <header className="page-head">
+        <div className="page-titles">
+          <h1>Not available</h1>
+        </div>
+      </header>
+      <EmptyState title="This page does not exist or is not part of your role.">Use the menu to open a page you have access to.</EmptyState>
     </section>
   );
 }
@@ -129,18 +87,18 @@ export function App() {
   if (devSignIn) return <DevSignIn />;
   if (error)
     return (
-      <main className="center" role="alert">
-        <h1>Cannot reach the portal</h1>
-        <p>{error}</p>
-        <button type="button" onClick={() => window.location.reload()}>
-          Try again
-        </button>
+      <main className="signin">
+        <div className="signin-card">
+          <ErrorState title="Cannot reach the portal" message={error} onRetry={() => window.location.reload()} />
+        </div>
       </main>
     );
   if (!me)
     return (
-      <main className="center" aria-busy="true">
-        <p>Signing you in...</p>
+      <main className="signin" aria-busy="true">
+        <div className="signin-card">
+          <Skeleton shape="lines" rows={3} label="Signing you in" />
+        </div>
       </main>
     );
   return <Shell me={me} />;

@@ -2,7 +2,8 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { get, post } from "../api/client";
 import type { PolicyVersion } from "../api/types";
-import { Async, Empty, Field, Page, Result, Ts, useAction, useLoad } from "../components/ui";
+import { Async, Button, EmptyState, Field, Page, Panel, Result, Section, Ts, useAction, useLoad } from "../components/ui";
+import "../styles/ops-admin.css";
 
 function Create({ onDone }: { onDone: () => void }) {
   const act = useAction();
@@ -16,20 +17,26 @@ function Create({ onDone }: { onDone: () => void }) {
     }
   }
   return (
-    <form className="card form" onSubmit={submit}>
-      <h2>New version</h2>
-      <p className="meta">Versions are immutable. To change the notice, create a new version and activate it.</p>
-      <Field label="Notice text shown to employees">
-        <textarea required rows={6} value={notice} onChange={(e) => setNotice(e.target.value)} />
-      </Field>
-      <Field label="Contact person or mailbox">
-        <input required value={contact} onChange={(e) => setContact(e.target.value)} />
-      </Field>
-      <button className="primary" disabled={act.busy}>
-        Create version
-      </button>
-      <Result ok={act.ok} err={act.err} />
-    </form>
+    <Panel title="New version" hint="Versions are immutable. To change the notice, create a new version and activate it.">
+      <form className="form" onSubmit={submit}>
+        <div className="ops-grid">
+          <div className="ops-wide">
+            <Field label="Notice text shown to employees" required>
+              <textarea required rows={6} value={notice} onChange={(e) => setNotice(e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Contact person or mailbox" required>
+            <input required value={contact} onChange={(e) => setContact(e.target.value)} />
+          </Field>
+        </div>
+        <div className="ops-actions">
+          <Button variant="primary" type="submit" disabled={act.busy}>
+            Create version
+          </Button>
+          <Result ok={act.ok} err={act.err} />
+        </div>
+      </form>
+    </Panel>
   );
 }
 
@@ -55,7 +62,7 @@ function Activate({ v }: { v: PolicyVersion }) {
     );
   }
   return (
-    <details>
+    <details className="ops-more">
       <summary>Activate version {v.version}</summary>
       <form className="form" onSubmit={submit}>
         <Field label="Applies to">
@@ -82,8 +89,10 @@ function Activate({ v }: { v: PolicyVersion }) {
             </Field>
           </>
         )}
-        <button disabled={act.busy}>Activate</button>
-        <Result ok={act.ok} err={act.err} />
+        <div className="ops-actions">
+          <Button type="submit" disabled={act.busy}>Activate</Button>
+          <Result ok={act.ok} err={act.err} />
+        </div>
       </form>
     </details>
   );
@@ -92,31 +101,40 @@ function Activate({ v }: { v: PolicyVersion }) {
 export function Policies() {
   const list = useLoad(() => get<{ policies: PolicyVersion[] }>("/policies"));
   return (
-    <Page title="Policy versions">
+    <Page title="Policy versions" lead="The monitoring notice employees acknowledge. Each version is fixed once created.">
       <Create onDone={list.reload} />
-      <Async load={list}>
-        {({ policies }) =>
-          policies.length === 0 ? (
-            <Empty>No policy versions yet.</Empty>
-          ) : (
-            <ul className="stack">
+      <Section title="Versions">
+        <Async
+          load={list}
+          skeleton="lines"
+          rows={4}
+          isEmpty={(d) => d.policies.length === 0}
+          empty={<EmptyState title="No policy versions yet">Create the first version with the form above, then activate it for employees.</EmptyState>}
+        >
+          {({ policies }) => (
+            <ol className="ops-versions" aria-label="Policy versions">
               {policies.map((v) => (
-                <li key={v.id} className="card">
-                  <h3>
-                    {v.name} v{v.version}
-                  </h3>
-                  <p className="meta">
-                    Created <Ts iso={v.created_at} />. <span className="mono">{v.content_hash.slice(0, 16)}</span>
-                  </p>
-                  <p className="prose">{v.content.notice_text}</p>
-                  <p>Contact: {v.content.contact}</p>
+                <li key={v.id}>
+                  <div className="ops-vhead">
+                    <h3>
+                      {v.name} v{v.version}
+                    </h3>
+                    <span className="meta">
+                      Created <Ts iso={v.created_at} />
+                    </span>
+                    <span className="mono meta" title={v.content_hash}>
+                      {v.content_hash.slice(0, 16)}
+                    </span>
+                  </div>
+                  <p className="ops-notice">{v.content.notice_text}</p>
+                  <p className="meta">Contact: {v.content.contact}</p>
                   <Activate v={v} />
                 </li>
               ))}
-            </ul>
-          )
-        }
-      </Async>
+            </ol>
+          )}
+        </Async>
+      </Section>
     </Page>
   );
 }
