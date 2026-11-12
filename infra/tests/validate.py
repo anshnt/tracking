@@ -7,6 +7,7 @@ templates, Keycloak realm invariants, compose network wiring, rendered nftables 
 """
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -187,10 +188,12 @@ check(list(inv["backup_sources"]["hosts"]) == ["data01"] and inv["zone_data"]["h
 check(inv["zone_mgmt"]["hosts"]["backup01"]["ansible_host"] == all_vars["nz_backup_host"], "backup01 address != nz_backup_host")
 check("restic-sftp" in all_vars["common_ssh_extra_groups"], "sshd on backup01 must allow the restic-sftp group")
 if shutil.which("nft"):
+    # nft -c still needs CAP_NET_ADMIN; CI runners are non-root with passwordless sudo.
+    nft = ["sudo", "-n", "nft"] if os.name != "nt" and os.geteuid() != 0 and shutil.which("sudo") else ["nft"]
     for name, text in (("workspace", ws), ("gateway", gw), ("mgmt", mg)):
         with tempfile.NamedTemporaryFile("w", suffix=".nft", delete=False) as t:
             t.write(text)
-        r = subprocess.run(["nft", "-c", "-f", t.name], capture_output=True, text=True)
+        r = subprocess.run([*nft, "-c", "-f", t.name], capture_output=True, text=True)
         check(r.returncode == 0, f"nft -c {name}: {r.stderr}")
 else:
     print("note: nft not installed, rendered ruleset not syntax-checked")
