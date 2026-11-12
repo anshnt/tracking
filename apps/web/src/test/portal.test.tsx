@@ -60,7 +60,7 @@ describe("posture badges", () => {
   it("maps each state and never turns unknown input green", () => {
     expect(postureBadge("compliant").tone).toBe("ok");
     expect(postureBadge("noncompliant").tone).toBe("bad");
-    expect(postureBadge("unknown").tone).toBe("warn");
+    expect(postureBadge("unknown").tone).toBe("unknown");
     expect(postureBadge("not_applicable").label).toBe("Not applicable");
     expect(postureBadge("something_new").label).toBe("Unknown");
     expect(postureBadge("something_new").tone).not.toBe("ok");

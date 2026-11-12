@@ -1,0 +1,43 @@
+/* Hallmark · shape: app screen · theme: Ultraviolet (lavender) · extends ../styles.css for the employee screens · states: loading, empty, error, full · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: S, hairline rows and a two-column form beside history; the notice card is the one object with a voice. ponytail: no :active styling here, buttons inherit it from styles.css */
+.e-two { display: grid; grid-template-columns: minmax(0, 26rem) minmax(0, 1fr); gap: var(--space-lg); align-items: start; }
+.e-two > .panel .field { max-width: none; }
+.e-stack { display: grid; gap: var(--space-xl); }
+
+/* notice card additions */
+.e-sig { display: grid; gap: 2px; }
+.e-sig strong { font-weight: 500; }
+.e-sig span { font-size: var(--text-xs); color: var(--color-muted); }
+.e-ack { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); color: var(--color-ink-2); }
+.notice-text:empty { display: none; }
+
+/* hairline list rows (history, requests) */
+.e-rows { list-style: none; margin: 0; padding: 0; display: grid; }
+.e-rows > li { display: grid; gap: var(--space-xs); padding-block: var(--space-md); border-bottom: 1px solid var(--color-rule); }
+.e-rows > li:first-child { padding-top: 0; }
+.e-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); justify-content: space-between; }
+.e-head h3 { font-size: var(--text-md); font-weight: 500; margin: 0; overflow-wrap: anywhere; }
+.e-body { margin: 0; max-width: 65ch; white-space: pre-wrap; }
+.e-sub { margin: 0; color: var(--color-muted); font-size: var(--text-xs); overflow-wrap: anywhere; }
+.e-blocker { margin: 0; color: var(--tone-bad); font-weight: 500; }
+.e-fine { display: grid; gap: var(--space-xs); padding: var(--space-sm) 0 0 var(--space-md); box-shadow: inset 2px 0 0 var(--color-rule); }
+.e-fine blockquote { margin: var(--space-2xs) 0 0; color: var(--color-ink-2); }
+.e-fine ol { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-sm); }
+.e-details summary { display: inline-flex; align-items: center; min-height: var(--control-h-sm); cursor: pointer; color: var(--color-ink-2); border-radius: var(--radius-pill); padding: 0 var(--space-sm); }
+.e-details summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.e-details[open] > summary { margin-bottom: var(--space-xs); }
+.e-receipt { padding: var(--space-sm) var(--space-md); border-radius: var(--radius-field); background: var(--color-paper-2); }
+.e-dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-2xs) var(--space-md); margin: 0; }
+.e-dl dt { color: var(--color-muted); font-size: var(--text-xs); padding-top: 2px; }
+.e-dl dd { margin: 0; overflow-wrap: anywhere; }
+.e-deliv { display: flex; flex-wrap: wrap; gap: var(--space-2xs) var(--space-sm); }
+.e-fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: var(--space-xs); justify-items: start; }
+.e-fieldset legend { padding: 0; font-weight: 500; margin-bottom: var(--space-xs); }
+.e-fieldset .field { max-width: none; }
+.e-del { display: grid; gap: var(--space-xs); justify-items: start; width: 100%; padding-bottom: var(--space-sm); }
+td .e-sub { margin-top: 2px; }
+
+@media (max-width: 60rem) {
+  .e-two { grid-template-columns: minmax(0, 1fr); }
+}
+.e-details summary:active { background: var(--color-paper-2); }

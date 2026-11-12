@@ -1,0 +1,55 @@
+/* Hallmark · shape: app screen · theme: Ultraviolet (lavender) · extends ../styles.css for team, devices, cases and export queue · states: loading, empty, error, full · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R4 V4 · weakest: S, a table-led admin screen; facts-only columns keep it honest */
+/* Team, devices, cases and export queue. Tokens only; shared recipes live in styles.css. */
+
+/* team overview: one panel per direct report, four fact columns */
+.people { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-md); }
+.person-blocker { margin: 0; padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); background: var(--tone-bad-soft); color: var(--tone-bad); font-size: var(--text-sm); justify-self: start; }
+.facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg); }
+.facts > section { min-width: 0; }
+.facts h3 { display: flex; align-items: baseline; gap: var(--space-xs); color: var(--color-muted); font-weight: 500; font-size: var(--text-xs); margin: 0 0 var(--space-xs); }
+.facts h3 .num { font-family: var(--font-outlier); font-variant-numeric: tabular-nums; }
+.facts ul { list-style: none; margin: 0; padding: 0; display: grid; }
+.facts li { display: grid; gap: var(--space-3xs); padding-block: var(--space-xs); box-shadow: 0 1px 0 var(--color-rule); font-size: var(--text-sm); }
+.facts li:last-child { box-shadow: none; }
+.facts .none { margin: 0; color: var(--color-muted); font-size: var(--text-sm); }
+.fact-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2xs) var(--space-xs); color: var(--color-muted); font-size: var(--text-xs); }
+
+/* devices */
+.posture-cell { display: grid; gap: var(--space-3xs); justify-items: start; }
+.posture-cell small { color: var(--color-muted); font-size: var(--text-xs); }
+.checks { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2xs); }
+.chip { display: inline-flex; align-items: center; min-height: 1.5rem; padding: 0 var(--space-sm); border-radius: var(--radius-pill); background: var(--color-paper-3); font-size: var(--text-xs); }
+td.cell-state, .cell-state { color: var(--color-muted); }
+td.cell-error { color: var(--tone-bad); font-weight: 500; }
+.group-first tr:first-child th, .group-first tr:first-child td { border-top: 1px solid var(--color-rule-2); }
+
+/* cases */
+.case-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2xs); }
+.case-list .rowbtn { padding-inline: var(--space-md); }
+.case-list .rowbtn strong { font-weight: 500; }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+.timeline li { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: var(--space-md); padding-block: var(--space-xs); box-shadow: 0 1px 0 var(--color-rule); font-size: var(--text-sm); }
+.timeline li:last-child { box-shadow: none; }
+.timeline .when { color: var(--color-muted); font-size: var(--text-xs); padding-top: 0.15rem; }
+.catalogue { display: flex; flex-wrap: wrap; gap: var(--space-xs); border: 0; padding: 0; margin: 0; }
+.catalogue legend { margin-bottom: var(--space-xs); font-size: var(--text-sm); }
+.case-detail h3 { color: var(--color-muted); font-weight: 500; font-size: var(--text-xs); }
+.case-sub { display: grid; gap: var(--space-xs); }
+
+/* export queue */
+.requests { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-md); }
+.requests .panel { max-width: 60rem; }
+.request-note { margin: 0; padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); background: var(--color-paper-3); color: var(--color-ink-2); font-size: var(--text-sm); justify-self: start; }
+.request-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+
+@media (max-width: 60rem) {
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .timeline li { grid-template-columns: 1fr; gap: var(--space-3xs); }
+}
+@media (max-width: 36rem) {
+  .facts { grid-template-columns: 1fr; }
+}
+
+.case-list .rowbtn:focus-visible, .catalogue .check:focus-within { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.case-list .rowbtn:active { background: var(--color-paper-3); }

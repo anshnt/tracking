@@ -8,5 +8,7 @@ dist/
 .env
 *.env.local
 .coverage
+.hallmark-shots/
 .hallmark/
 site/.hallmark/
+*.tsbuildinfo
