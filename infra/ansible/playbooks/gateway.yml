@@ -1,0 +1,7 @@
+---
+- name: Guacamole gateway host (guacamole + guacd)
+  hosts: gateway_hosts
+  vars_files:
+    - ../group_vars/vault.yml
+  roles:
+    - role: guacamole_host

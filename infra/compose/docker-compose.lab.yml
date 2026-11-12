@@ -1,0 +1,312 @@
+# Single-host SYNTHETIC LAB for the Work and Security Portal. Not a production topology:
+# production splits these onto separate VMs per zone (see infra/ansible).
+#
+#   docker compose --env-file ../versions.env --env-file .env -f docker-compose.lab.yml up -d
+#   docker compose ... --profile gitea up -d        # optional internal Git
+#   Wazuh: official single-node stack, see wazuh/README.md (not reinvented here)
+#
+# Networks (a service is only on the networks it needs):
+#   edge     published ports; caddy only
+#   app      caddy <-> keycloak / portal / guacamole web   (internal, no egress)
+#   gateway  guacamole <-> guacd                            (internal, no egress)
+#   data     postgres and its clients                       (internal, no egress)
+#   workspace  guacd -> workspace VMs (RDP 3389). ONLY guacd is attached.
+# "internal: true" networks have no route off the host, so no service except caddy and guacd
+# can reach the internet or LAN. guacd needs a route to the workspace VMs; on a real host,
+# restrict it with nftables (ansible role network_zones) and run guacd on its own VM.
+
+name: tracking-lab
+
+x-hardened: &hardened
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging:
+    driver: json-file
+    options: { max-size: "10m", max-file: "5" }
+
+networks:
+  edge: {}
+  app: { internal: true }
+  gateway: { internal: true }
+  data: { internal: true }
+  workspace:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${WORKSPACE_SUBNET:-10.77.50.0/24}
+
+volumes:
+  caddy_data:
+  caddy_config:
+  lab_ca:         # root.crt only, world readable; caddy_data itself is root-only (0700/0600)
+  pg_data:
+  guac_schema:
+  gitea_data:
+
+services:
+  caddy:
+    <<: *hardened
+    image: caddy:${CADDY_VERSION:?set in versions.env}
+    environment:
+      LAB_DOMAIN: ${LAB_DOMAIN:?}
+      MGMT_CIDR: ${MGMT_CIDR:?}
+    ports:
+      - "${EDGE_BIND_IP:-127.0.0.1}:443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      edge: {}
+      app:
+        # services call each other through the proxy so issuer URLs match the browser's
+        aliases: ["portal.${LAB_DOMAIN}", "auth.${LAB_DOMAIN}", "desktop.${LAB_DOMAIN}", "git.${LAB_DOMAIN}"]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/healthz"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  # Caddy's storage is root-only, but the portal runs as uid 10001. Copy just the public root
+  # certificate to a separate world-readable volume. The CA private key never leaves caddy_data.
+  caddy-ca-export:
+    image: caddy:${CADDY_VERSION:?set in versions.env}
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        src=/data/caddy/pki/authorities/local/root.crt
+        for i in $$(seq 1 60); do [ -f "$$src" ] && break; sleep 1; done
+        cp "$$src" /lab-ca/root.crt && chmod 0644 /lab-ca/root.crt && chmod 0755 /lab-ca
+    volumes:
+      - caddy_data:/data:ro
+      - lab_ca:/lab-ca
+    network_mode: none
+    restart: "no"
+    depends_on:
+      caddy: { condition: service_healthy }
+
+  postgres:
+    <<: *hardened
+    image: postgres:${POSTGRES_VERSION:?}
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?}
+      GUACAMOLE_DB_PASSWORD: ${GUACAMOLE_DB_PASSWORD:?}
+      GITEA_DB_PASSWORD: ${GITEA_DB_PASSWORD:?}
+      PORTAL_MIGRATOR_DB_PASSWORD: ${PORTAL_MIGRATOR_DB_PASSWORD:?}
+      PORTAL_DB_PASSWORD: ${PORTAL_DB_PASSWORD:?}
+      BACKUP_DB_PASSWORD: ${BACKUP_DB_PASSWORD:?}
+    command: ["postgres", "-c", "password_encryption=scram-sha-256", "-c", "log_connections=on"]
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres/01-init-roles.sh:/docker-entrypoint-initdb.d/01-init-roles.sh:ro
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  keycloak:
+    <<: *hardened
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:?}
+    command: ["start", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?}
+      KC_HOSTNAME: https://auth.${LAB_DOMAIN}
+      KC_HTTP_ENABLED: "true"            # TLS terminates at caddy
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"          # management port 9000, never proxied
+      KC_METRICS_ENABLED: "false"
+      # one-time bootstrap account in the MASTER realm; rotate and remove after first login.
+      # Day-to-day admins are separate named accounts, never employee identities.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_BOOTSTRAP_ADMIN:-bootstrap-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_BOOTSTRAP_ADMIN_PASSWORD:?}
+      # substituted into realm-tracking.json at import
+      LAB_DOMAIN: ${LAB_DOMAIN:?}
+      PORTAL_CLIENT_SECRET: ${PORTAL_CLIENT_SECRET:?}
+    volumes:
+      - ../keycloak/realm-tracking.json:/opt/keycloak/data/import/realm-tracking.json:ro
+    networks: [app, data]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      # image has no curl: raw HTTP over bash /dev/tcp
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  # ---- portal -------------------------------------------------------------------------
+  portal-migrate:
+    image: tracking-portal:${PORTAL_IMAGE_TAG:-lab}
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://portal_migrator:${PORTAL_MIGRATOR_DB_PASSWORD:?}@postgres:5432/portal
+      PORTAL_ENV: development   # alembic only needs DATABASE_URL; avoids OIDC settings checks
+    networks: [data]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  portal-grants:
+    image: postgres:${POSTGRES_VERSION:?}
+    command: ["sh", "/portal-grants.sh"]
+    environment:
+      PORTAL_MIGRATOR_DB_PASSWORD: ${PORTAL_MIGRATOR_DB_PASSWORD:?}
+    volumes:
+      - ./portal-grants.sh:/portal-grants.sh:ro
+      - ./postgres/portal-grants.sql:/postgres/portal-grants.sql:ro
+    networks: [data]
+    depends_on:
+      portal-migrate: { condition: service_completed_successfully }
+    restart: "no"
+
+  portal-api: &portal
+    <<: *hardened
+    image: tracking-portal:${PORTAL_IMAGE_TAG:-lab}
+    environment: &portal_env
+      PORTAL_ENV: ${PORTAL_ENV:-production}
+      DATABASE_URL: postgresql+psycopg://portal:${PORTAL_DB_PASSWORD:?}@postgres:5432/portal
+      PUBLIC_ORIGIN: https://portal.${LAB_DOMAIN}
+      OIDC_ISSUER: https://auth.${LAB_DOMAIN}/realms/tracking
+      OIDC_CLIENT_ID: portal
+      OIDC_CLIENT_SECRET: ${PORTAL_CLIENT_SECRET:?}
+      # lab only: trust caddy's internal CA when calling Keycloak (replaces the system bundle)
+      SSL_CERT_FILE: /lab-ca/root.crt
+    volumes:
+      - lab_ca:/lab-ca:ro
+    networks: [app, data]
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: [ALL]
+    depends_on:
+      portal-grants: { condition: service_completed_successfully }
+      keycloak: { condition: service_healthy }
+      caddy: { condition: service_healthy }
+      caddy-ca-export: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).status == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  portal-worker:
+    <<: *portal
+    command: ["python", "-m", "portal.worker"]
+    healthcheck:
+      disable: true   # ponytail: worker has no health endpoint yet; watch the failed-job queue instead
+    networks: [data, app]
+
+  # ---- Guacamole ----------------------------------------------------------------------
+  guac-schema:
+    image: guacamole/guacamole:${GUACAMOLE_VERSION:?}
+    # emit the stock postgres schema into a shared volume
+    entrypoint: ["sh", "-c", "/opt/guacamole/bin/initdb.sh --postgresql > /schema/initdb.sql"]
+    user: "0"   # the image runs as a non-root user and a fresh named volume is root-owned; no network, no secrets
+    volumes: [guac_schema:/schema]
+    restart: "no"
+    network_mode: none
+
+  guac-db-init:
+    image: postgres:${POSTGRES_VERSION:?}
+    command: ["sh", "/guac-db-init.sh"]
+    environment:
+      GUACAMOLE_DB_PASSWORD: ${GUACAMOLE_DB_PASSWORD:?}
+      GUAC_BOOTSTRAP_ADMIN: ${GUAC_BOOTSTRAP_ADMIN:?}
+    volumes:
+      - guac_schema:/schema:ro
+      - ./guac-db-init.sh:/guac-db-init.sh:ro
+      - ./postgres/guacamole-bootstrap.sql:/postgres/guacamole-bootstrap.sql:ro
+    networks: [data]
+    depends_on:
+      postgres: { condition: service_healthy }
+      guac-schema: { condition: service_completed_successfully }
+    restart: "no"
+
+  guacd:
+    <<: *hardened
+    image: guacamole/guacd:${GUACAMOLE_VERSION:?}
+    # gateway: reachable only from guacamole. workspace: the only network that can reach RDP hosts.
+    networks: [gateway, workspace]
+    cap_drop: [ALL]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':</dev/tcp/127.0.0.1/4822'"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  guacamole:
+    <<: *hardened
+    image: guacamole/guacamole:${GUACAMOLE_VERSION:?}
+    environment:
+      WEBAPP_CONTEXT: ROOT
+      GUACD_HOSTNAME: guacd
+      POSTGRESQL_HOSTNAME: postgres
+      POSTGRESQL_DATABASE: guacamole
+      POSTGRESQL_USER: guacamole
+      POSTGRESQL_PASSWORD: ${GUACAMOLE_DB_PASSWORD:?}
+      POSTGRESQL_AUTO_CREATE_ACCOUNTS: "true"   # SAML users get a DB row on first login, no permissions
+      # SAML extension (the image bundles it via EXTENSIONS); see infra/guacamole/guacamole.properties.example
+      EXTENSIONS: auth-sso-saml
+      EXTENSION_PRIORITY: saml
+      SAML_IDP_METADATA_URL: https://auth.${LAB_DOMAIN}/realms/tracking/protocol/saml/descriptor
+      SAML_ENTITY_ID: https://desktop.${LAB_DOMAIN}
+      SAML_CALLBACK_URL: https://desktop.${LAB_DOMAIN}
+      SAML_STRICT: "true"
+      SAML_COMPRESS_REQUEST: "true"
+      SAML_COMPRESS_RESPONSE: "true"
+      # trust Caddy's internal CA for the IdP metadata fetch: see infra/README.md (JVM truststore step)
+      JAVA_OPTS: ${GUAC_JAVA_OPTS:-}
+      REMOTE_IP_VALVE_ENABLED: "true"
+      PROXY_ALLOWED_IPS_REGEX: ".*"            # only caddy can reach this container (internal networks)
+    networks: [app, gateway, data]
+    cap_drop: [ALL]
+    depends_on:
+      guac-db-init: { condition: service_completed_successfully }
+      guacd: { condition: service_healthy }
+      keycloak: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /api/languages HTTP/1.0\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200'"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  # ---- optional: internal Git (profile gitea) ------------------------------------------
+  gitea:
+    <<: *hardened
+    profiles: ["gitea"]
+    image: gitea/gitea:${GITEA_VERSION:?}
+    environment:
+      GITEA__database__DB_TYPE: postgres
+      GITEA__database__HOST: postgres:5432
+      GITEA__database__NAME: gitea
+      GITEA__database__USER: gitea
+      GITEA__database__PASSWD: ${GITEA_DB_PASSWORD:?}
+      GITEA__server__ROOT_URL: https://git.${LAB_DOMAIN}/
+      GITEA__server__DOMAIN: git.${LAB_DOMAIN}
+      GITEA__service__DISABLE_REGISTRATION: "true"
+      GITEA__security__INSTALL_LOCK: "true"
+      GITEA__other__SHOW_FOOTER_VERSION: "false"
+    volumes: [gitea_data:/data]
+    networks: [app, data]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

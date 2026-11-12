@@ -1,0 +1,5 @@
+ansible/group_vars/vault.yml
+ansible/inventory.yml
+ansible/collections/
+compose/.env
+*.retry

@@ -1,0 +1,72 @@
+#!/usr/sbin/nft -f
+# {{ ansible_managed }}
+# Host firewall for zone "{{ nz_zone }}". Default deny inbound. Zones: {{ nz_zones.keys() | list | join(', ') }}.
+# Only this table is replaced on reload; other tables (Docker) are left alone.
+table inet portal_zones
+delete table inet portal_zones
+
+table inet portal_zones {
+  # Shared accept rules for traffic addressed to this host.
+  chain inbound {
+    ct state invalid drop
+    ct state established,related accept
+    iifname "lo" accept
+    ip saddr {{ nz_zones.mgmt }} tcp dport {{ nz_ssh_port }} accept comment "ssh from mgmt only"
+{% for f in nz_flows if f.dst == nz_zone %}
+    ip saddr { {{ (f.sources | default([nz_zones[f.src]])) | join(', ') }} }{% if f.destinations is defined %} ip daddr { {{ f.destinations | join(', ') }} }{% endif %} {{ f.proto }} dport { {{ f.ports | join(', ') }} } accept comment "{{ f.name }}"
+{% endfor %}
+    ip protocol icmp icmp type echo-request limit rate 5/second accept
+  }
+
+  chain input {
+    type filter hook input priority filter; policy drop;
+    jump inbound
+  }
+
+  # This host is not a router. Docker hosts manage their own forwarding.
+{% if not nz_docker_host %}
+  chain forward {
+    type filter hook forward priority filter; policy drop;
+  }
+{% endif %}
+
+  chain output {
+    type filter hook output priority filter; policy {{ 'drop' if nz_zone in nz_output_drop_zones else 'accept' }};
+    ct state established,related accept
+    oifname "lo" accept
+{% if nz_zone in nz_output_drop_zones %}
+{% for dns in nz_internal_dns %}
+    ip daddr {{ dns }} udp dport 53 accept comment "internal dns"
+    ip daddr {{ dns }} tcp dport 53 accept comment "internal dns"
+{% endfor %}
+{% for f in nz_flows if f.src == nz_zone %}
+    ip daddr { {{ (f.destinations | default([nz_zones[f.dst]])) | join(', ') }} } {{ f.proto }} dport { {{ f.ports | join(', ') }} } accept comment "{{ f.name }}"
+{% endfor %}
+{% endif %}
+  }
+{% if nz_docker_host and nz_zone == 'gateway' %}
+
+  # guacd sits on its own bridge and is masqueraded as this host, which the zone flows already let
+  # reach data:5432 and edge:443. Only RDP to the workspace zone may leave that bridge. Runs before
+  # Docker's own forward rules; a drop here is final.
+  chain guacd_egress {
+    type filter hook forward priority filter - 10; policy accept;
+    iifname "{{ nz_guacd_bridge }}" ip daddr {{ nz_zones.workspace }} tcp dport 3389 accept
+    iifname "{{ nz_guacd_bridge }}" drop
+  }
+{% endif %}
+{% if nz_docker_host %}
+
+  # Docker publishes ports with DNAT, so those packets skip the input hook. Apply the same
+  # inbound rules before DNAT, otherwise a published port would be open to every zone.
+  chain pre_dnat {
+    type filter hook prerouting priority -150; policy accept;
+    iifname "lo" accept
+    iifname "docker0" accept
+    iifname "br-*" accept
+    ct state established,related accept
+    fib daddr type local jump inbound
+    fib daddr type local drop
+  }
+{% endif %}
+}

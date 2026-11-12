@@ -1,0 +1,46 @@
+---
+- name: Refuse to run without the backup public key
+  ansible.builtin.assert:
+    that:
+      - backup_ssh_public_key | length > 0
+      - "'CHANGE_ME' not in backup_ssh_public_key"
+    fail_msg: Fill vault_backup_ssh_public_key (the public half of vault_backup_ssh_private_key).
+
+# restic-sftp is also in common_ssh_extra_groups, otherwise sshd's AllowGroups would reject the account.
+- name: Group for the repository account
+  ansible.builtin.group:
+    name: restic-sftp
+    system: true
+
+- name: Repository account (key only, sftp subsystem needs a shell)
+  ansible.builtin.user:
+    name: "{{ backup_repo_user }}"
+    group: restic-sftp
+    shell: /bin/bash
+    home: /srv/restic
+    create_home: false
+    password: "!"
+    system: true
+
+- name: Account home, owned by the account and not group or world writable (sshd StrictModes)
+  ansible.builtin.file:
+    path: /srv/restic
+    state: directory
+    owner: "{{ backup_repo_user }}"
+    group: restic-sftp
+    mode: "0750"
+
+- name: Repository directory
+  ansible.builtin.file:
+    path: "{{ backup_repo_dir }}"
+    state: directory
+    owner: "{{ backup_repo_user }}"
+    group: restic-sftp
+    mode: "0700"
+    recurse: false
+
+- name: authorized_keys limited to the data host's address only, no pty, no forwarding
+  ansible.posix.authorized_key:
+    user: "{{ backup_repo_user }}"
+    key: "{{ backup_ssh_public_key | trim }}"
+    key_options: 'from="{{ data_host }}",restrict'

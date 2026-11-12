@@ -1,0 +1,29 @@
+---
+# Copy to group_vars/vault.yml, replace every CHANGE_ME, then:  ansible-vault encrypt group_vars/vault.yml
+# Never commit the decrypted file. Roles refuse to run with CHANGE_ME / TODO values.
+
+# Wazuh agent enrollment password (must match the manager's authd.pass)
+vault_wazuh_registration_password: CHANGE_ME
+# sha256 of the Wazuh apt signing key and of the restic binary archive (from official release metadata)
+vault_wazuh_gpg_key_sha256: TODO_SHA256
+vault_restic_sha256: TODO_SHA256
+
+# Backup credentials: separate from every application credential
+vault_backup_restic_password: CHANGE_ME
+vault_backup_db_password: CHANGE_ME
+# Dedicated ed25519 key for the restic sftp repository (ssh-keygen -t ed25519), and the pinned host key line
+# for backup01 (ssh-keyscan -t ed25519 backup01.internal.example, compare the fingerprint out of band).
+vault_backup_ssh_private_key: CHANGE_ME
+vault_backup_ssh_public_key: CHANGE_ME
+vault_backup_repo_host_key: CHANGE_ME
+
+# Portal runtime secrets
+vault_portal_database_url: "postgresql+psycopg://portal:CHANGE_ME@10.20.50.10:5432/portal"
+vault_portal_migrator_database_url: "postgresql+psycopg://portal_migrator:CHANGE_ME@10.20.50.10:5432/portal"
+vault_oidc_client_secret: CHANGE_ME
+
+# Guacamole
+vault_guacamole_db_password: CHANGE_ME
+
+# Per workspace VM (put in host_vars/<host>/vault.yml, one hash per employee VM):
+#   vault_workspace_password_hash: "$6$..."   # from: mkpasswd -m sha-512

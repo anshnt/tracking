@@ -1,0 +1,32 @@
+# Data classes, PLAN section 5. Handling is looked up by the class; nothing here enforces itself.
+version: 1
+classes:
+  public:
+    description: Approved for external sharing.
+    workspace: any
+    transfer_profile: standard
+    egress_profile: browsing
+    export_approval: none
+    retention: per business owner
+  internal:
+    description: Routine business information, authenticated employees only.
+    workspace: server_workspace_or_company_laptop
+    transfer_profile: standard
+    egress_profile: sensitive
+    export_approval: none
+    retention: per business owner
+  confidential:
+    description: Customer records, contracts, private source, financial details.
+    workspace: server_workspace   # default; BYOD is remote-only via the gateway
+    transfer_profile: standard
+    egress_profile: sensitive
+    export_approval: single_reviewer
+    retention: per contract / business owner
+  restricted:
+    description: Production secrets, bulk customer exports, sensitive regulated information.
+    workspace: server_workspace_role_limited
+    transfer_profile: restricted
+    egress_profile: sensitive
+    export_approval: second_reviewer_not_requester
+    standing_access: minimal
+    retention: per legal requirement

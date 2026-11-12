@@ -1,0 +1,4 @@
+---
+backup_repo_user: restic
+backup_repo_dir: /srv/restic/tracking
+backup_ssh_public_key: "{{ vault_backup_ssh_public_key | default('') }}"

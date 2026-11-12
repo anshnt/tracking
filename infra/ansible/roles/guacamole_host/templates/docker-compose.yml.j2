@@ -1,0 +1,54 @@
+# {{ ansible_managed }}
+# Gateway host: Guacamole web + guacd. The database lives in the data zone (not here).
+# guacd is only on the internal "gateway" network, so only guacamole can talk to it, and on
+# "rdp" (a normal bridge) so it can reach workspace RDP. The host firewall (network_zones,
+# chain guacd_egress) drops everything else that bridge forwards, and each workspace VM's own firewall allow 3389 from this host's address only.
+name: tracking-gateway
+
+networks:
+  gateway:
+    internal: true
+  rdp:         # guacd to workspace RDP only; fixed bridge name so the host firewall can match it
+    driver_opts:
+      com.docker.network.bridge.name: {{ nz_guacd_bridge }}
+  uplink: {}   # guacamole web to the database and IdP
+
+services:
+  guacd:
+    image: guacamole/guacd:{{ guacamole_version }}
+    restart: unless-stopped
+    networks: [gateway, rdp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':</dev/tcp/127.0.0.1/4822'"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  guacamole:
+    image: guacamole/guacamole:{{ guacamole_version }}
+    restart: unless-stopped
+    depends_on:
+      guacd: { condition: service_healthy }
+    env_file: .env
+    environment:
+      WEBAPP_CONTEXT: ROOT
+      GUACD_HOSTNAME: guacd
+      POSTGRESQL_HOSTNAME: "{{ guacamole_db_host }}"
+      POSTGRESQL_DATABASE: guacamole
+      POSTGRESQL_USER: guacamole
+      POSTGRESQL_AUTO_CREATE_ACCOUNTS: "true"
+      EXTENSIONS: auth-sso-saml
+      EXTENSION_PRIORITY: saml
+      SAML_IDP_METADATA_URL: "{{ guacamole_idp_metadata_url }}"
+      SAML_ENTITY_ID: "{{ guacamole_public_url }}"
+      SAML_CALLBACK_URL: "{{ guacamole_public_url }}"
+      SAML_STRICT: "true"
+      REMOTE_IP_VALVE_ENABLED: "true"
+      PROXY_ALLOWED_IPS_REGEX: "{{ nz_proxy_host | replace('.', '\\.') }}"
+    networks: [gateway, uplink]
+    ports:
+      - "{{ guacamole_bind_ip }}:8080:8080"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]

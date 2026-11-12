@@ -1,0 +1,104 @@
+---
+- name: Refuse to run with placeholder secrets
+  ansible.builtin.assert:
+    that:
+      - guacamole_db_password | length > 0
+      - "'CHANGE_ME' not in guacamole_db_password"
+      - guacamole_bootstrap_admin is match('^[^@\s]+@[^@\s]+$')
+    fail_msg: Set guacamole_db_password (vault) and guacamole_bootstrap_admin (an email).
+
+- name: Install Docker engine and compose plugin from the distribution
+  ansible.builtin.apt:
+    name: [docker.io, docker-compose-v2]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Database client for the one-time schema and bootstrap step
+  ansible.builtin.apt:
+    name: "postgresql-client-{{ backup_pg_client_major }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+# The stock schema ships guacadmin/guacadmin with ADMINISTER, and /api/tokens accepts a password
+# whatever EXTENSION_PRIORITY says. So the same bootstrap SQL as the lab runs here, and the role
+# fails if guacadmin is still enabled afterwards.
+- name: Generate the stock Guacamole schema (offline, from the pinned image)
+  ansible.builtin.command: >-
+    docker run --rm --network none --entrypoint /opt/guacamole/bin/initdb.sh
+    guacamole/guacamole:{{ guacamole_version }} --postgresql
+  register: guacamole_schema
+  changed_when: false
+  run_once: true
+
+- name: Bootstrap SQL, single source in infra/compose/postgres
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../compose/postgres/guacamole-bootstrap.sql"
+    dest: /root/guacamole-bootstrap.sql
+    owner: root
+    group: root
+    mode: "0600"
+
+- name: Load the schema if the database is empty, then neutralise guacadmin and create the SAML admin
+  ansible.builtin.shell: |
+    set -eu
+    export PGPASSWORD="$GUAC_DB_PASSWORD"
+    PSQL="psql -v ON_ERROR_STOP=1 -h {{ guacamole_db_host }} -U guacamole -d guacamole"
+    if [ "$($PSQL -tAc "SELECT to_regclass('public.guacamole_user') IS NOT NULL")" != "t" ]; then
+      echo "$GUAC_SCHEMA" | $PSQL -f -
+    fi
+    $PSQL -v admin_user="$GUAC_ADMIN" -f /root/guacamole-bootstrap.sql
+    $PSQL -tAc "SELECT count(*) FROM guacamole_user u JOIN guacamole_entity e USING (entity_id) WHERE e.name = 'guacadmin' AND NOT u.disabled"
+  args:
+    executable: /bin/bash
+  environment:
+    GUAC_DB_PASSWORD: "{{ guacamole_db_password }}"
+    GUAC_SCHEMA: "{{ guacamole_schema.stdout }}"
+    GUAC_ADMIN: "{{ guacamole_bootstrap_admin }}"
+  register: guacamole_bootstrap
+  changed_when: false
+  no_log: true
+  run_once: true
+
+- name: guacadmin must be disabled (a default credential would bypass SAML and OTP)
+  ansible.builtin.assert:
+    that: guacamole_bootstrap.stdout_lines | last == '0'
+    fail_msg: The default guacadmin account is still enabled.
+
+- name: Docker enabled
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Deployment directory
+  ansible.builtin.file:
+    path: "{{ guacamole_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Secrets file
+  ansible.builtin.copy:
+    dest: "{{ guacamole_dir }}/.env"
+    content: |
+      POSTGRESQL_PASSWORD={{ guacamole_db_password }}
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Compose file
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ guacamole_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: Start guacd and guacamole
+  community.docker.docker_compose_v2:
+    project_src: "{{ guacamole_dir }}"
+    state: present

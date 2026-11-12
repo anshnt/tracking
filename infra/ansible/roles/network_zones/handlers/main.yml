@@ -1,0 +1,6 @@
+---
+# Load only our own table: a full "systemctl reload nftables" flushes the ruleset, which would
+# also delete the tables Docker maintains on container hosts.
+- name: Apply nftables zone rules
+  ansible.builtin.command: /usr/sbin/nft -f /etc/nftables.d/10-portal-zones.nft
+  changed_when: true

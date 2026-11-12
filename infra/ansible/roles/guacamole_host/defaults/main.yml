@@ -1,0 +1,9 @@
+---
+# guacamole_version comes from group_vars/all.yml
+guacamole_dir: /opt/tracking-gateway
+guacamole_db_host: "{{ data_host }}"
+guacamole_db_password: "{{ vault_guacamole_db_password | default('') }}"
+guacamole_public_url: https://desktop.lab.example
+guacamole_idp_metadata_url: https://auth.lab.example/realms/tracking/protocol/saml/descriptor
+guacamole_bootstrap_admin: ""        # required: email (SAML NameID) of the first operator; gets the bootstrap admin account
+guacamole_bind_ip: "{{ ansible_host }}"

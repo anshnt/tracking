@@ -1,0 +1,33 @@
+# Egress profiles for workspace VMs, PLAN sections 5-7. Enforced by ansible role network_zones
+# (nftables on the VM) and, in production, again at the hypervisor/segment firewall.
+version: 1
+profiles:
+  sensitive:
+    description: Workspaces holding Confidential or Restricted data. Internal only.
+    internet: deny
+    dns: internal_resolver_only
+    allow:
+      - { name: portal,         to: portal.internal,  proto: tcp, ports: [443] }
+      - { name: git,            to: git.internal,     proto: tcp, ports: [443, 22] }
+      - { name: package_mirror, to: mirror.internal,  proto: tcp, ports: [443] }
+      - { name: wazuh_manager,  to: wazuh.internal,   proto: tcp, ports: [1514, 1515] }
+      - { name: time,           to: ntp.internal,     proto: udp, ports: [123] }
+    deny_always:
+      - other_workspace_vms
+      - management_network
+      - data_network
+      - hypervisor_management
+      - lan_discovery
+      - container_runtime_sockets
+  browsing:
+    description: Separate non-sensitive research VM. Data comes in through an approved import workflow only.
+    internet: allowlist
+    allow_domains: []   # TODO: owner to decide; domain allowlists are weaker than internal-only
+    must_not_hold: [confidential, restricted]
+verification_tests:
+  - DNS to an external resolver is blocked (udp and tcp 53, DoT 853, DoH to well-known resolvers)
+  - HTTP(S) redirect from an allowed host to an external host is blocked
+  - Personal account on an allowed multi-tenant business domain (known gap, document it)
+  - SSH and git over alternate ports to the internet
+  - Reaching a peer workspace VM, the management network, database ports, hypervisor API
+  - Direct RDP from a laptop to 3389 (must fail; only guacd may connect)

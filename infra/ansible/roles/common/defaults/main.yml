@@ -1,0 +1,7 @@
+---
+common_ssh_port: 22
+common_ssh_admin_group: ssh-admins
+common_ssh_extra_groups: []      # other groups allowed to log in over ssh (service accounts)
+common_apt_mirror: ""            # base URL of an internal Debian mirror; empty keeps the distribution defaults
+common_ssh_admin_users: []     # required: at least one existing account, or sshd would lock everyone out
+common_ntp_servers: []         # required: internal time source(s)

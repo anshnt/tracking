@@ -1,0 +1,14 @@
+---
+- name: Restic repository account on the backup host
+  hosts: backup_repo_hosts
+  vars_files:
+    - ../group_vars/vault.yml
+  roles:
+    - role: backup_repo
+
+- name: Encrypted independent backup (restic) with restore tests
+  hosts: backup_sources
+  vars_files:
+    - ../group_vars/vault.yml
+  roles:
+    - role: backup

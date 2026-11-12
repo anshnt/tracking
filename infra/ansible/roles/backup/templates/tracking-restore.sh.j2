@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Restore a snapshot into a NEW directory (never in place) and verify it against the manifest.
+#   usage: tracking-restore.sh <snapshot-id|latest> <empty-target-dir>
+# Afterwards load the databases yourself into the clean environment, for example:
+#   createdb -h <host> -U <owner> portal && pg_restore -h <host> -U <owner> -d portal --no-owner <target>/.../portal.dump
+# Then, BEFORE exposing the restored system: re-apply deletion tombstones and current legal holds.
+# ponytail: tombstone/legal-hold re-application is a manual step until the portal has a restore hook (PLAN P09).
+set -euo pipefail
+umask 077
+
+snap=${1:?snapshot id or latest}
+target=${2:?empty target dir}
+[ ! -e "$target" ] || [ -z "$(ls -A "$target")" ] || { echo "target must be empty" >&2; exit 1; }
+mkdir -p "$target"
+
+set -a; . {{ backup_conf_dir }}/env; set +a
+start=$(date +%s)
+restic restore "$snap" --target "$target"
+manifest=$(find "$target" -name SHA256SUMS -print -quit)
+[ -n "$manifest" ] || { echo "no SHA256SUMS in snapshot" >&2; exit 1; }
+( cd "$(dirname "$manifest")" && sha256sum --check --quiet SHA256SUMS )
+echo "restored and verified in $(( $(date +%s) - start ))s into $target"

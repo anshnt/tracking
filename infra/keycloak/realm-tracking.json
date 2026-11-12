@@ -1,0 +1,216 @@
+{
+  "realm": "tracking",
+  "displayName": "Work and Security Portal",
+  "enabled": true,
+  "sslRequired": "all",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 5,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "maxDeltaTimeSeconds": 43200,
+  "accessTokenLifespan": 300,
+  "accessTokenLifespanForImplicitFlow": 300,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanLogin": 600,
+  "accessCodeLifespanUserAction": 300,
+  "actionTokenGeneratedByUserLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 28800,
+  "offlineSessionIdleTimeout": 2592000,
+  "clientSessionIdleTimeout": 1800,
+  "clientSessionMaxLifespan": 28800,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "passwordPolicy": "length(14) and notUsername(undefined) and notEmail(undefined) and passwordHistory(5) and hashAlgorithm(pbkdf2-sha512)",
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyCodeReusable": false,
+  "eventsEnabled": true,
+  "eventsExpiration": 7776000,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": true,
+  "browserSecurityHeaders": {
+    "contentSecurityPolicyReportOnly": "",
+    "xContentTypeOptions": "nosniff",
+    "referrerPolicy": "no-referrer",
+    "xRobotsTag": "none",
+    "xFrameOptions": "SAMEORIGIN",
+    "contentSecurityPolicy": "frame-src 'self'; frame-ancestors 'self'; object-src 'none';",
+    "xXSSProtection": "1; mode=block",
+    "strictTransportSecurity": "max-age=31536000; includeSubDomains"
+  },
+  "attributes": {
+    "frontendUrl": "",
+    "_note_admin_separation": "Employee identities never hold the admin role. Admins use separate named accounts (for example alice and alice-admin) and the master realm admin is a third, break-glass identity.",
+    "_note_recovery": "No self-service password reset: IT resets credentials after an identity check. Keep offline recovery records for the OTP reset procedure."
+  },
+  "roles": {
+    "realm": [
+      { "name": "employee", "description": "Every staff member. Granted by default." },
+      { "name": "manager", "description": "Sees direct reports only (portal enforces the relationship)." },
+      { "name": "it", "description": "Device, workspace and offboarding operations." },
+      { "name": "security", "description": "Security events, cases, export review." },
+      { "name": "approver", "description": "Approves or rejects export requests. Never the requester." },
+      { "name": "admin", "description": "Portal administration. Implies nothing else: roles are matched literally. Assign to separate admin identities only." }
+    ]
+  },
+  "defaultRole": {
+    "name": "default-roles-tracking",
+    "description": "Default roles for the tracking realm",
+    "composite": true,
+    "composites": {
+      "realm": ["offline_access", "uma_authorization", "employee"]
+    }
+  },
+  "requiredActions": [
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10,
+      "config": {}
+    },
+    {
+      "alias": "UPDATE_PASSWORD",
+      "name": "Update Password",
+      "providerId": "UPDATE_PASSWORD",
+      "enabled": true,
+      "defaultAction": false,
+      "priority": 20,
+      "config": {}
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "admin-cli",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "account-console",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "rootUrl": "${authBaseUrl}",
+      "baseUrl": "/realms/tracking/account/",
+      "redirectUris": ["/realms/tracking/account/"],
+      "attributes": {"pkce.code.challenge.method": "S256"}
+    },
+    {
+      "clientId": "portal",
+      "name": "Work and Security Portal",
+      "description": "Confidential OIDC client, authorization code + PKCE (S256). No implicit, no direct grants.",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${PORTAL_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "authorizationServicesEnabled": false,
+      "rootUrl": "https://portal.${LAB_DOMAIN}",
+      "baseUrl": "https://portal.${LAB_DOMAIN}/",
+      "redirectUris": ["https://portal.${LAB_DOMAIN}/api/auth/callback"],
+      "webOrigins": [],
+      "frontchannelLogout": false,
+      "fullScopeAllowed": true,
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://portal.${LAB_DOMAIN}/",
+        "access.token.lifespan": "300",
+        "client.session.idle.timeout": "1800",
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.revoke.offline.tokens": "true",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "use.refresh.tokens": "true"
+      },
+      "defaultClientScopes": ["web-origins", "profile", "email", "roles"],
+      "optionalClientScopes": [],
+      "protocolMappers": [
+        {
+          "name": "realm-roles-in-id-token",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "https://desktop.${LAB_DOMAIN}",
+      "name": "Guacamole gateway",
+      "description": "SAML service provider for the Guacamole SSO extension. Entity ID must equal SAML_ENTITY_ID.",
+      "protocol": "saml",
+      "enabled": true,
+      "rootUrl": "https://desktop.${LAB_DOMAIN}",
+      "baseUrl": "https://desktop.${LAB_DOMAIN}/",
+      "redirectUris": ["https://desktop.${LAB_DOMAIN}/"],
+      "webOrigins": [],
+      "frontchannelLogout": true,
+      "fullScopeAllowed": false,
+      "attributes": {
+        "saml_idp_initiated_sso_url_name": "",
+        "saml.authnstatement": "true",
+        "saml.server.signature": "true",
+        "saml.assertion.signature": "true",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml.client.signature": "false",
+        "saml.force.post.binding": "true",
+        "saml_name_id_format": "email",
+        "saml_force_name_id_format": "true",
+        "saml_assertion_consumer_url_post": "https://desktop.${LAB_DOMAIN}/",
+        "saml_single_logout_service_url_redirect": "https://desktop.${LAB_DOMAIN}/",
+        "saml.encrypt": "false"
+      },
+      "protocolMappers": [
+        {
+          "name": "email",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-property-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "email",
+            "attribute.name": "email",
+            "attribute.nameformat": "Basic",
+            "friendly.name": "email"
+          }
+        }
+      ]
+    }
+  ]
+}

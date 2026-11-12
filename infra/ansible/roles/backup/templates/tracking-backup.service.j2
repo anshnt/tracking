@@ -1,0 +1,13 @@
+[Unit]
+Description=Tracking portal backup (pg_dump + restic)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tracking-backup.sh
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths={{ backup_staging_dir }} /run /var/cache
+ProtectHome=read-only
+NoNewPrivileges=true

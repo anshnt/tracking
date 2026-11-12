@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Nightly: application-consistent dump of each database (pg_dump is a consistent snapshot),
+# sha256 manifest, then an encrypted restic snapshot to the separate backup repository.
+# The staging dir is wiped afterwards; no credentials go into the snapshot or the manifest.
+set -euo pipefail
+umask 077
+
+set -a; . {{ backup_conf_dir }}/env; set +a
+stage={{ backup_staging_dir }}
+
+exec 9>/run/tracking-backup.lock
+flock -n 9 || { echo "another backup is running" >&2; exit 1; }
+
+rm -rf "${stage:?}"/*
+trap 'rm -rf "${stage:?}"/*' EXIT
+
+for db in {{ backup_databases | join(' ') }}; do
+  pg_dump --format=custom --no-owner --no-privileges \
+    -h {{ backup_db_host }} -p {{ backup_db_port }} -U {{ backup_db_user }} -d "$db" \
+    -f "$stage/$db.dump"
+done
+
+{% if backup_keycloak_export_cmd %}
+mkdir -p "$stage/keycloak-realm"
+{{ backup_keycloak_export_cmd }} "$stage/keycloak-realm"
+{% endif %}
+{% if backup_gitea_container %}
+docker exec -u git {{ backup_gitea_container }} gitea dump --type tar.gz --file /tmp/gitea-dump.tar.gz
+docker cp {{ backup_gitea_container }}:/tmp/gitea-dump.tar.gz "$stage/gitea-dump.tar.gz"
+docker exec {{ backup_gitea_container }} rm -f /tmp/gitea-dump.tar.gz
+{% endif %}
+
+( cd "$stage" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS )
+
+restic backup --tag tracking --host {{ inventory_hostname }} "$stage"
+echo "backup ok $(date -u +%FT%TZ)"

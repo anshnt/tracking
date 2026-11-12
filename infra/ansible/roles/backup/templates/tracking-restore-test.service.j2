@@ -1,0 +1,11 @@
+[Unit]
+Description=Tracking restore rehearsal (checksums + pg_restore --list)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tracking-restore-test.sh
+PrivateTmp=true
+ProtectHome=read-only
+NoNewPrivileges=true

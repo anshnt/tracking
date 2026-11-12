@@ -1,0 +1,14 @@
+# Image digests. Resolve on a machine with registry access and replace TODO:
+#   docker buildx imagetools inspect <image>:<tag> --format '{{.Manifest.Digest}}'
+# Then reference as image:tag@sha256:... in the compose file / Dockerfile.
+# Compose and Dockerfile currently pin by tag only (digests could not be resolved offline).
+quay.io/keycloak/keycloak:26.8.2        TODO_SHA256
+guacamole/guacamole:1.6.0               TODO_SHA256
+guacamole/guacd:1.6.0                   TODO_SHA256
+postgres:17.11                          TODO_SHA256
+caddy:2.11.9                            TODO_SHA256
+gitea/gitea:28.3.0                      TODO_SHA256
+node:22-bookworm-slim                   TODO_SHA256
+python:3.13-slim-bookworm               TODO_SHA256
+ghcr.io/astral-sh/uv:0.11.18            TODO_SHA256
+# wazuh-docker images (profile "wazuh") come from the official single-node deployment, see README.

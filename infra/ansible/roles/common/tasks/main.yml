@@ -1,0 +1,111 @@
+---
+- name: Refuse to harden SSH without an admin user and a time source
+  ansible.builtin.assert:
+    that:
+      - common_ssh_admin_users | length > 0
+      - common_ntp_servers | length > 0
+    fail_msg: Set common_ssh_admin_users and common_ntp_servers (see group_vars/all.yml).
+
+- name: Point apt at the internal mirror (this host cannot reach the internet)
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/debian.sources
+    content: |
+      Types: deb
+      URIs: {{ common_apt_mirror }}/debian
+      Suites: {{ ansible_facts['distribution_release'] }} {{ ansible_facts['distribution_release'] }}-updates
+      Components: main
+      Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+      Types: deb
+      URIs: {{ common_apt_mirror }}/debian-security
+      Suites: {{ ansible_facts['distribution_release'] }}-security
+      Components: main
+      Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+    owner: root
+    group: root
+    mode: "0644"
+  when: common_apt_mirror | length > 0
+
+- name: No other apt sources on a mirror-only host
+  ansible.builtin.file:
+    path: /etc/apt/sources.list
+    state: absent
+  when: common_apt_mirror | length > 0
+
+- name: Install baseline packages
+  ansible.builtin.apt:
+    name: [unattended-upgrades, apt-listchanges, chrony, openssh-server]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Enable daily unattended security updates
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+      APT::Periodic::AutocleanInterval "7";
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Create the SSH admin group
+  ansible.builtin.group:
+    name: "{{ common_ssh_admin_group }}"
+    system: true
+
+- name: Put admin users in the SSH admin group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: "{{ common_ssh_admin_group }}"
+    append: true
+  loop: "{{ common_ssh_admin_users }}"
+
+- name: Harden sshd (drop-in)
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/10-hardening.conf
+    content: |
+      Port {{ common_ssh_port }}
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PubkeyAuthentication yes
+      PermitEmptyPasswords no
+      X11Forwarding no
+      AllowTcpForwarding no
+      AllowAgentForwarding no
+      MaxAuthTries 3
+      LoginGraceTime 30
+      ClientAliveInterval 300
+      ClientAliveCountMax 2
+      AllowGroups {{ ([common_ssh_admin_group] + common_ssh_extra_groups) | join(' ') }}
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Validate and reload sshd
+
+- name: Stop using the public NTP pool
+  ansible.builtin.replace:
+    path: /etc/chrony/chrony.conf
+    regexp: '^(pool .*)$'
+    replace: '# \1'
+  notify: Restart chrony
+
+- name: Use internal time sources
+  ansible.builtin.copy:
+    dest: /etc/chrony/sources.d/internal.sources
+    content: |
+      {% for s in common_ntp_servers %}
+      server {{ s }} iburst
+      {% endfor %}
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart chrony
+
+- name: Enable time sync
+  ansible.builtin.service:
+    name: chrony
+    state: started
+    enabled: true

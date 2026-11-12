@@ -1,0 +1,43 @@
+---
+# Copy to inventory.yml and fill in. Addresses are examples from RFC 5737/private space.
+# One employee per workspace VM: each host sets workspace_employee.
+all:
+  vars:
+    ansible_user: ops-admin           # a named admin account; key auth only
+  children:
+    zone_edge:
+      vars: { nz_zone: edge, nz_docker_host: true }
+      hosts:
+        edge01: { ansible_host: 10.20.10.10 }
+    zone_app:
+      vars: { nz_zone: app, nz_docker_host: true }
+      hosts:
+        portal01: { ansible_host: 10.20.20.10 }
+    zone_gateway:
+      vars: { nz_zone: gateway, nz_docker_host: true }
+      hosts:
+        gateway01: { ansible_host: 10.20.30.10 }
+    zone_workspace:
+      vars: { nz_zone: workspace }
+      hosts:
+        ws-alice:
+          ansible_host: 10.20.40.11
+          workspace_employee: { username: alice, uid: 20001, comment: "Alice Example" }
+        ws-bob:
+          ansible_host: 10.20.40.12
+          workspace_employee: { username: bob, uid: 20002, comment: "Bob Example" }
+    zone_data:
+      vars: { nz_zone: data, nz_docker_host: true }
+      hosts:
+        data01: { ansible_host: 10.20.50.10 }
+    zone_mgmt:
+      vars: { nz_zone: mgmt }
+      hosts:
+        backup01: { ansible_host: 10.20.60.10 }
+
+    # roles by function
+    portal_hosts: { hosts: { portal01: {} } }
+    gateway_hosts: { hosts: { gateway01: {} } }
+    workspace_vms: { children: { zone_workspace: {} } }
+    backup_sources: { hosts: { data01: {} } }   # host that can reach Postgres and run pg_dump
+    backup_repo_hosts: { hosts: { backup01: {} } }   # holds the restic sftp repository (flow backup-to-repo)

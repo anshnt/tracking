@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# {{ ansible_managed }}
+# Monthly restore rehearsal. Restores the latest snapshot to a scratch dir, checks sampled
+# checksums, proves every dump is readable by pg_restore, spot-checks repository data, and
+# records the elapsed time (feeds the RTO measurement). Exits non-zero on any mismatch.
+set -euo pipefail
+umask 077
+
+set -a; . {{ backup_conf_dir }}/env; set +a
+scratch=$(mktemp -d /var/tmp/tracking-restore-test.XXXXXX)
+trap 'rm -rf "$scratch"' EXIT
+log=/var/log/tracking-restore-test.log
+start=$(date +%s)
+
+restic restore latest --tag tracking --target "$scratch"
+manifest=$(find "$scratch" -name SHA256SUMS -print -quit)
+[ -n "$manifest" ] || { echo "FAIL no SHA256SUMS" | tee -a "$log"; exit 1; }
+dir=$(dirname "$manifest")
+
+# full manifest check (dumps are small)
+( cd "$dir" && sha256sum --check --quiet SHA256SUMS )
+
+for dump in "$dir"/*.dump; do
+  pg_restore --list "$dump" > /dev/null
+done
+
+{% if backup_restore_test_scratch_db_url %}
+# optional full restore of the portal dump into a scratch database, then count tables
+pg_restore --clean --if-exists --no-owner -d "{{ backup_restore_test_scratch_db_url }}" "$dir/portal.dump"
+psql "{{ backup_restore_test_scratch_db_url }}" -tAc "select count(*) from information_schema.tables where table_schema='public'" | grep -qv '^0$'
+{% endif %}
+
+# read 5% of the repository data to detect bit rot
+restic check --read-data-subset=5%
+
+elapsed=$(( $(date +%s) - start ))
+echo "$(date -u +%FT%TZ) OK restore-test elapsed=${elapsed}s snapshot=$(restic snapshots latest --tag tracking --json | tr -d '\n' | grep -o '"short_id":"[^"]*"' | head -n1)" | tee -a "$log"
