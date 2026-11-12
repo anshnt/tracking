@@ -7,17 +7,16 @@ import { Async, Empty, Field, Page, Result, useAction, useLoad, useMe } from "..
 import { ExportSummary } from "./Exports";
 
 function Decide({ r, onDone }: { r: ExportRequest; onDone: () => void }) {
+  const me = useMe();
   const act = useAction();
   const [reason, setReason] = useState("");
   async function go(decision: "approved" | "rejected") {
     if (await act.run(() => post(`/export-requests/${r.id}/decisions`, { decision, reason: reason.trim() || null }), `Recorded: ${decision}.`)) onDone();
   }
+  if (r.requester_id === me.id) return <p className="meta">This is your request. Another approver must decide it.</p>;
   return (
     <div className="form">
-      <p className="meta">
-        {r.classification === "restricted" ? "Restricted: needs two distinct approvers, one after the other. " : ""}
-        You cannot approve your own request.
-      </p>
+      {r.classification === "restricted" && <p className="meta">Restricted: needs two distinct approvers, one after the other.</p>}
       <Field label="Reason (required to reject)">
         <input maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
       </Field>
