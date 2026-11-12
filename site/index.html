@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tracking, a work and security portal</title>
+<meta name="description" content="A self-hosted work and security portal for a team of five: sign-in with MFA, isolated Linux workspaces in the browser, a notice that lists what is never recorded, checksum-bound export approvals and offboarding that stays open until verified.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav-wrap">
+  <nav class="nav" aria-label="Main">
+    <a class="nav__brand" href="#top" aria-label="tracking, home">
+      <svg class="nav__mark" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="4" cy="18" r="2.5" class="m3"/><circle cx="9" cy="12" r="3" class="m2"/><circle cx="16" cy="6" r="4" class="m1"/></svg>
+      <span>tracking</span>
+    </a>
+    <ul class="nav__links">
+      <li><a href="#screens">screens</a></li>
+      <li><a href="#parts">parts</a></li>
+      <li><a href="#questions">questions</a></li>
+      <li><a href="#run">run it</a></li>
+    </ul>
+    <a class="pill" href="https://github.com/anshnt/tracking/blob/main/docs/threat-model.md">threat model</a>
+  </nav>
+</header>
+
+<main id="main">
+<section class="hero" id="top">
+  <div class="container">
+    <h1>tracking that says what it never records</h1>
+    <div class="hero__row">
+      <p class="lead">Work summaries, export approvals and offboarding for a team of five, self-hosted.</p>
+      <div class="actions">
+        <a class="btn btn--primary" href="https://github.com/anshnt/tracking">open the repository</a>
+        <a class="btn btn--secondary" href="#run">run it</a>
+      </div>
+    </div>
+  </div>
+  <div class="container container--wide">
+    <picture>
+      <source media="(max-width: 40rem)" srcset="images/notice-never-m.webp" width="716" height="568">
+      <img class="never" src="images/notice-never.webp" width="1992" height="450" alt="The dark panel from the portal’s Home screen, titled what is never recorded. It lists application categories and idle periods; window titles, full URLs and clipboard text; screenshots and full session recordings; and keystrokes, passwords, personal browsing, camera and audio." fetchpriority="high">
+    </picture>
+  </div>
+</section>
+
+<section class="run" id="screens" aria-labelledby="screens-h">
+  <div class="container run__grid">
+    <div class="pane">
+      <h2 id="screens-h">five promises, each on a screen</h2>
+      <p class="lead">Captured from the running portal. Sample data.</p>
+      <ol class="index" aria-label="Screens">
+        <li><a href="#s-recorded" aria-current="true">what is recorded</a></li>
+        <li><a href="#s-team">team overview</a></li>
+        <li><a href="#s-devices">devices</a></li>
+        <li><a href="#s-exports">export approval</a></li>
+        <li><a href="#s-offboarding">offboarding</a></li>
+      </ol>
+    </div>
+    <div class="shots">
+      <figure class="shot" id="s-recorded">
+        <h3>six things recorded, each with who sees it</h3>
+        <picture>
+          <source media="(max-width: 40rem)" srcset="images/recorded-m.webp" width="748" height="938">
+          <img src="images/recorded.webp" width="1528" height="742" alt="The recorded half of the notice: tasks and blockers, the daily work update, project time, workspace start and end, device health on company devices only, and export and privileged actions. Each line says whether it is on and who sees it.">
+        </picture>
+        <figcaption>Each line says whether it is on and who sees it.</figcaption>
+      </figure>
+      <figure class="shot" id="s-team">
+        <h3>counts of blockers, never a score</h3>
+        <picture>
+          <source media="(max-width: 40rem)" srcset="images/team-m.webp" width="748" height="2368">
+          <img src="images/team.webp" width="1528" height="1546" alt="Team overview: counts of direct reports, blockers, overdue tasks, awaiting review and missing updates, then the first two people with their assignments." loading="lazy">
+        </picture>
+        <figcaption>Facts about assignments and reviews, listed alphabetically. No scores, percentages or rankings.</figcaption>
+      </figure>
+      <figure class="shot" id="s-devices">
+        <h3>unknown stays unknown</h3>
+        <picture>
+          <source media="(max-width: 40rem)" srcset="images/devices-m.webp" width="748" height="1700">
+          <img src="images/devices.webp" width="1528" height="1620" alt="Devices: a count strip with zero compliant and three unknown, and a table where company laptops show as unknown and personal laptops show as not applicable." loading="lazy">
+        </picture>
+        <figcaption>Stale evidence shows as unknown, never as compliant. Nothing is collected from personal laptops.</figcaption>
+      </figure>
+      <figure class="shot" id="s-exports">
+        <h3>the requester cannot approve it</h3>
+        <picture>
+          <source media="(max-width: 40rem)" srcset="images/exports-m.webp" width="748" height="750">
+          <img src="images/exports.webp" width="1528" height="662" alt="The export queue as an approver: a requested export of a quarterly churn summary with its SHA-256 checksum, a reason field, and approve and reject buttons." loading="lazy">
+        </picture>
+        <figcaption>One person asks, another decides, and the decision binds to the file’s SHA-256 checksum.</figcaption>
+      </figure>
+      <figure class="shot" id="s-offboarding">
+        <h3>three of thirteen steps done, so the job stays open</h3>
+        <picture>
+          <source media="(max-width: 40rem)" srcset="images/offboarding-m.webp" width="748" height="2520">
+          <img src="images/offboarding.webp" width="1528" height="2392" alt="An offboarding job in progress: a banner reading not complete with ten outstanding steps, and a table of thirteen steps, three succeeded and the rest pending." loading="lazy">
+        </picture>
+        <figcaption>A job is complete only when every step succeeded or a person recorded it, and the final verification passed.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="band band--violet" id="parts" aria-labelledby="parts-h">
+  <div class="container">
+    <h2 id="parts-h">five parts, all on your servers</h2>
+    <p class="lead">The portal is tested. The rest is written and validated offline, not yet run on real hardware.</p>
+    <table class="parts">
+      <thead><tr><th scope="col">part</th><th scope="col">job</th><th scope="col">state</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Keycloak</th><td>sign-in with MFA</td><td>not yet run</td></tr>
+        <tr><th scope="row">Guacamole and xrdp</th><td>an isolated Linux workspace each, in the browser</td><td>not yet run</td></tr>
+        <tr><th scope="row">Wazuh</th><td>security events from workspaces and laptops</td><td>not yet run</td></tr>
+        <tr><th scope="row">restic</th><td>encrypted backups to separate storage</td><td>not yet run</td></tr>
+        <tr class="parts__own"><th scope="row">the portal</th><td>summaries, notice, approvals, offboarding, audit</td><td><span>tested</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="ask" id="questions" aria-labelledby="ask-h">
+  <div class="container">
+    <h2 id="ask-h">what it will not do, and what it has not done yet</h2>
+    <dl class="rows">
+      <div class="row"><dt>does it log keystrokes or screenshots?</dt><dd>No keylogging, screenshots, camera or clipboard capture.</dd></div>
+      <div class="row"><dt>can I approve my own export?</dt><dd>No. A different person approves, against the checksum.</dd></div>
+      <div class="row"><dt>does it install anything on my own computer?</dt><dd>Not by default. Personal laptops use a browser workspace.</dd></div>
+      <div class="row"><dt>when is offboarding done?</dt><dd>When every step is verified. A personal device is never wiped.</dd></div>
+      <div class="row"><dt>has it run on real hardware?</dt><dd>Only the portal: 218 API tests, plus web tests. The lab and Ansible files are not yet run.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="band band--ink" id="run" aria-labelledby="run-h">
+  <div class="container run-code">
+    <div class="run-code__text">
+      <h2 id="run-h">three shells, no Docker</h2>
+      <p class="lead">Needs Python 3.13 with uv, Node 22 and PostgreSQL 16 or 17.</p>
+      <div class="actions">
+        <a class="btn btn--primary" href="https://github.com/anshnt/tracking">open the repository</a>
+        <a class="btn btn--secondary" href="https://github.com/anshnt/tracking/blob/main/README.md">read the readme</a>
+      </div>
+    </div>
+    <div class="run-code__blocks">
+      <figure class="code">
+        <figcaption>first shell</figcaption>
+<pre><code>git clone https://github.com/anshnt/tracking
+cd tracking/apps/api
+export PORTAL_ENV=development PORTAL_DEV_AUTH=1
+export PUBLIC_ORIGIN=http://localhost:5173
+uv sync
+uv run alembic upgrade head
+uv run uvicorn portal.main:app --port 8000</code></pre>
+      </figure>
+      <figure class="code">
+        <figcaption>second and third shell</figcaption>
+<pre><code>uv run python -m portal.worker
+cd ../web &amp;&amp; npm ci &amp;&amp; npm run dev</code></pre>
+      </figure>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <p class="foot__mark" aria-hidden="true">tracking</p>
+    <ul class="foot__links">
+      <li><a href="https://github.com/anshnt/tracking">repository</a></li>
+      <li><a href="https://github.com/anshnt/tracking/blob/main/docs/plan/PLAN.md">plan</a></li>
+      <li><a href="https://github.com/anshnt/tracking/blob/main/docs/threat-model.md">threat model</a></li>
+      <li><a href="https://github.com/anshnt/tracking/blob/main/docs/validation/test-plan.md">test plan</a></li>
+      <li><a href="https://github.com/anshnt/tracking/blob/main/infra/README.md">infra readme</a></li>
+    </ul>
+    <div class="foot__notes">
+      <p>Screens show sample data from a local development server.</p>
+      <p>Lab and Ansible files are validated offline, not yet run on real hardware.</p>
+      <p>Proprietary licence, see the <a href="https://github.com/anshnt/tracking/blob/main/LICENSE">licence file</a>.</p>
+    </div>
+  </div>
+</footer>
+<script src="site.js" defer></script>
+</body>
+</html>
