@@ -1,0 +1,41 @@
+[project]
+name = "portal"
+version = "0.1.0"
+description = "Work and Security Portal API"
+requires-python = ">=3.13"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "sqlalchemy>=2",
+  "psycopg[binary]",
+  "alembic",
+  "pydantic-settings",
+  "httpx",
+  "pyjwt[crypto]",
+  "python-multipart",
+]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["portal"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["B008", "E501"]  # B008: FastAPI Depends() in defaults; E501: formatter owns wrapping
+
+[tool.ruff.lint.per-file-ignores]
+"tests/conftest.py" = ["E402"]  # env vars must be set before portal is imported

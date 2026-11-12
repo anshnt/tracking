@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tracking.invalid/contracts/event.schema.json",
+  "title": "NormalizedEvent",
+  "description": "What every connector emits before anything is stored. Mirrors portal.connectors.base.NormalizedEvent and the security_events table. Window titles, full URLs, clipboard text and secrets are never carried.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "source",
+    "source_event_id",
+    "event_type",
+    "occurred_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Connector name, for example wazuh."
+    },
+    "source_event_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Upstream id. (source, source_event_id) is the dedup key."
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short dotted type, for example auth.login_failed."
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC, when it happened upstream."
+    },
+    "received_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC, when the portal ingested it."
+    },
+    "employee_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid",
+      "description": "Only when identity resolved exactly; never guessed."
+    },
+    "asset_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid",
+      "description": "Only when the asset resolved exactly."
+    },
+    "severity": {
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "info"
+    },
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "resource": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "classification": {
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "restricted"
+      ],
+      "default": "internal"
+    },
+    "retention_policy": {
+      "type": "string",
+      "default": "security-90d",
+      "description": "A retention_rules.data_class."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Allowlisted flat scalar (or short list) values only. Query strings and fragments are stripped from URLs.",
+      "properties": {
+        "action": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "agent_id": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "agent_name": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "category": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "clock_skew_s": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "count": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "decoder": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "disk_encryption": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "dst_ip": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "host": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "labels": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "level": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "outcome": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "process_name": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "ref": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "repo": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "rule_groups": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "rule_id": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "src_ip": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "status": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        },
+        "version": {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ]
+        }
+      }
+    }
+  }
+}
