@@ -315,3 +315,11 @@ def test_production_refuses_dev_auth_and_placeholders():
     ):
         with pytest.raises(ValidationError):
             Settings(**{**good, **bad})
+
+
+def test_methods_reports_dev_sign_in_only_when_enabled(app, override_settings):
+    client = TestClient(app)
+    override_settings()
+    assert client.get("/api/auth/methods").json() == {"oidc": False, "dev": False}
+    override_settings(portal_dev_auth=True)
+    assert client.get("/api/auth/methods").json()["dev"] is True

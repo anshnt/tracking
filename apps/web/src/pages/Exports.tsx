@@ -100,7 +100,7 @@ export function ExportSummary({ r }: { r: ExportRequest }) {
       </p>
       <p className="prose">{r.purpose}</p>
       <p className="meta mono wrap">
-        {r.object_version ? `v${r.object_version} ` : ""}sha256 {r.object_checksum}
+        {r.object_version ? `version ${r.object_version}, ` : ""}sha256 {r.object_checksum}
       </p>
       {r.decisions.map((d, i) => (
         <p key={i} className="meta">

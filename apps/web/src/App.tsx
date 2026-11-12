@@ -8,6 +8,7 @@ import { navFor } from "./lib/nav";
 import { Admin } from "./pages/Admin";
 import { Cases } from "./pages/Cases";
 import { Connectors } from "./pages/Connectors";
+import { DevSignIn } from "./pages/DevSignIn";
 import { Devices } from "./pages/Devices";
 import { ExportQueue } from "./pages/ExportQueue";
 import { Exports } from "./pages/Exports";
@@ -114,14 +115,18 @@ function NotAllowed() {
 export function App() {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [devSignIn, setDevSignIn] = useState(false);
   useEffect(() => {
     get<Me>("/me")
       .then(setMe)
-      .catch((e) => {
-        if (e instanceof ApiError && e.status === 401) window.location.assign(LOGIN_URL);
-        else setError(errText(e));
+      .catch(async (e) => {
+        if (!(e instanceof ApiError && e.status === 401)) return setError(errText(e));
+        const methods = await get<{ oidc: boolean; dev: boolean }>("/api/auth/methods").catch(() => null);
+        if (methods?.dev && !methods.oidc) setDevSignIn(true);
+        else window.location.assign(LOGIN_URL);
       });
   }, []);
+  if (devSignIn) return <DevSignIn />;
   if (error)
     return (
       <main className="center" role="alert">

@@ -394,6 +394,12 @@ class DevLogin(BaseModel):
     roles: list[str] = ["employee"]
 
 
+@router.get("/methods")
+def methods(settings: Settings = Depends(get_settings)):
+    """Which sign-in routes exist, so the web app can offer the dev form when there is no IdP."""
+    return {"oidc": bool(settings.oidc_issuer), "dev": settings.dev_auth_enabled}
+
+
 @router.post("/dev-login")
 def dev_login(
     body: DevLogin,

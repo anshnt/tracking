@@ -5,8 +5,12 @@ export function formatTs(iso: string | null | undefined, tz: string): string {
   if (Number.isNaN(d.getTime())) return iso;
   try {
     return new Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
+      // dateStyle/timeStyle cannot be combined with timeZoneName (Intl throws), so spell the fields out.
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
       timeZone: tz,
       timeZoneName: "short",
     }).format(d);
